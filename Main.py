@@ -57,10 +57,21 @@ def unknown(bot, update):
 
 def solve(bot, update, args):
     try:
-        response = Wolfram.ask(args)
-        bot.send_message(chat_id=update.message.chat_id, text=response)
+        response_text, response_images = Wolfram.ask(args)
+
+        if response_text is None and response_images is None:
+            bot.send_message(chat_id=update.message.chat_id, text=":( Try to rephrase your query.")
+            return
+
+        if response_text:
+            bot.send_message(chat_id=update.message.chat_id, text="Result: " + response_text)
+
+        for title, image in response_images:
+            bot.send_message(chat_id=update.message.chat_id, text=title + ":")
+            bot.send_photo(chat_id=update.message.chat_id, photo=image)
+
     except ValueError:
-        logging.error(response)
+        logging.error("Solve error.")
         bot.send_message(chat_id=update.message.chat_id, text='Something went wrong with the Wolfram Alpha :c')
 
 def error(bot, update, error):
