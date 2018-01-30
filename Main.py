@@ -19,13 +19,24 @@ def unknown(bot, update):
                      text='Sorry, I didn\'t understand you')
 
 
-def solve(args):
+def solve(message, args):
     try:
-        response = Wolfram.ask(args)
-        return response
+        response_text, response_images = Wolfram.ask(args)
+
+        if response_text is None and response_images is None:
+            bot.send_message(message.chat.id, ":( Try to rephrase your query.")
+            return
+
+        if response_text:
+            bot.send_message(message.chat.id, "Result: " + response_text)
+
+        for title, image in response_images:
+            bot.send_message(message.chat.id, title + ":")
+            bot.send_photo(message.chat.id, image)
+
     except ValueError:
-        logging.error(response)
-        return 'Something went wrong with the Wolfram Alpha :c'
+        logging.error("Solve error.")
+        bot.send_message(message.chat.id, 'Something went wrong with the Wolfram Alpha :c')
 
 
 def error(bot, update, error):
@@ -60,7 +71,7 @@ def repeat_all_messages(message):  # Название функции не игр
 
     else:
         print("Wolfram: ", message.text)
-        bot.send_message(message.chat.id, solve(args=message.text))
+        message.chat.id, solve(message=message, args=message.text)
 
 
 def main():
