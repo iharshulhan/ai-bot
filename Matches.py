@@ -16,7 +16,7 @@ begin_amount = 21
 
 class Matches:
 
-    def end_game(message):
+    def __end_game__(message):
         return (message, begin_amount, "")
 
     def turn(state: int, user_amount: int):
@@ -33,16 +33,18 @@ class Matches:
         # check user input
         if user_amount <= 0:
             return ("Cheat <=> miserable live", None, None)
-        if state - user_amount < 0:
+        if new_state - user_amount < 0:
             return ("you done wrong move", None, None)
+        if user_amount > max_turn:
+            return ("Wrong move! Maximum value is " + str(max_turn), None, None)
         # accept user input
         new_state = new_state - user_amount
         if new_state == 0:
-            return Matches.end_game("You lose")
+            return Matches.__end_game__("You lose")
         # compute my AI ANN super move
         bot_amount = min(max_turn, new_state - 1)
         if bot_amount <= 0:
-            return Matches.end_game("You win")
+            return Matches.__end_game__("You win")
 
         new_state -= bot_amount
         return ("My turn. I'll take: ", new_state, bot_amount)

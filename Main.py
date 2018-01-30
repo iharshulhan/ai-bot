@@ -4,6 +4,8 @@ import logging
 from WolframApi import Wolfram
 import Config
 import re
+import GameState as games
+from Matches import Matches
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -52,15 +54,28 @@ def start(message):
     #TODO: рассказать как ходить
     pass
 
+def do_matches(message, args):
+    state = games.get_game_state_for_user(Config.sh_matches, message.chat.id)
+    print("Debug output", args)
+    msg, state, bmv = Matches.turn(state, int(args))
+    bot.send_message(message.chat.id, msg)
+    if not bmv is None:
+        bot.send_message(message.chat.id, "Bot's move: " + str(bmv))
+    if not state is None:
+        games.set_user_game(Config.sh_matches, message.chat.id, state)
+        bot.send_message(message.chat.id, "Sticks lost: " + str(state))
+
+
 @bot.message_handler(content_types=["text"])
-def repeat_all_messages(message):  # Название функции не играет никакой роли, в принципе
+def repeat_all_messages(message):
     if re.compile("^[-+]?[0-9]$").match(message.text):
         # TODO: integrate Matches game and rooms. May be limit will be not almost 9 due to game rules
         print("Matches: ", message.text)
-        bot.send_message(message.chat.id, "There Matches game. Not implemented yet.")
+        do_matches(message, message.text)
 
-    elif re.compile("^[a-c|A-C][1-3]$").match(message.text):
+    elif re.compile("^[x-z|X-Z][1-3]$").match(message.text):
         # TODO: integrate TicTacToe 3x3. !!!!!!!!!!!!!!! КОЛЛИЗИИ С ПОЛЕМ 15х15
+        # upd: коллизии решены за счёт того что буквы будут с конца алфавита (смекалочка)
         print("XO 3x3: ", message.text)
         bot.send_message(message.chat.id, "There XO (3x3) game. Not implemented yet.")
 
