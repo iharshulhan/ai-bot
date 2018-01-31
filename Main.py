@@ -4,6 +4,7 @@
 import telebot
 
 from games.tic_tac_toe import TicTacToeGameSpec
+from games.tic_tac_toe_x import TicTacToeXGameSpec
 import logging
 from WolframApi import Wolfram
 import Config
@@ -140,7 +141,6 @@ def do_xo_small(message, args):
     user_move = symbols_to_tuple(args)
     print("User's move: ", user_move)
 
-    
     try:
         board_state = game_spec.apply_move(board_state, user_move, 1)
     except  ValueError:
@@ -149,27 +149,37 @@ def do_xo_small(message, args):
     print("User board")
     bot.send_message(chat_id, "Your turn: \n" + serialize_board(board_state))
 
-    winner = game_spec.has_winner(board_state)
-    if winner == 1:
-        bot.send_message(chat_id, "You won!!!")
-        games.finish_user_game(Config.sh_xo_3, chat_id)
-        return
-    elif winner == -1:
-        bot.send_message(chat_id, "Bot won!!! Bot is really smart ^ ^")
-        games.finish_user_game(Config.sh_xo_3, chat_id)
+    def check_winner():
+        winner = game_spec.has_winner(board_state)
+        if winner == 1:
+            bot.send_message(chat_id, "You won!!!")
+            games.finish_user_game(Config.sh_xo_3, chat_id)
+            return True
+        elif winner == -1:
+            bot.send_message(chat_id, "Bot won!!! Bot is really smart ^ ^")
+            games.finish_user_game(Config.sh_xo_3, chat_id)
+            return True
+        return False
+
+    if check_winner():
         return
     
     # Check if it is a Draw
-    sum = 0
-    num = 0
-    for x in board_state:
-        for y in x:
-            sum += y
-            if y != 0:
-                num += 1
-    if num == 9 and sum == 0:
-        bot.send_message(chat_id, "Draw! We both are awesome :)")
-        games.finish_user_game(Config.sh_xo_3, chat_id)
+    def check_draw():
+        sum = 0
+        num = 0
+        for x in board_state:
+            for y in x:
+                sum += y
+                if y != 0:
+                    num += 1
+        if num == 9:
+            bot.send_message(chat_id, "Draw! We both are awesome :)")
+            games.finish_user_game(Config.sh_xo_3, chat_id)
+            return True
+        return False
+
+    if check_draw():
         return
 
     # Bot's move
@@ -177,32 +187,86 @@ def do_xo_small(message, args):
     board_state = game_spec.apply_move(board_state, bot_move, -1)
     bot.send_message(chat_id, "Bot's turn: \n" + serialize_board(board_state))
 
-    winner = game_spec.has_winner(board_state)
-    if winner == 1:
-        bot.send_message(chat_id, "You won!!!")
-        games.finish_user_game(Config.sh_xo_3, chat_id)
-    if winner == -1:
-        bot.send_message(chat_id, "Bot won!!! Bot is really smart ^ ^")
-        games.finish_user_game(Config.sh_xo_3, chat_id)
+    if check_winner():
+        return
 
     # Check if it is a Draw
-    sum = 0
-    num = 0
-    for x in board_state:
-        for y in x:
-            sum += y
-            if y != 0:
-                num += 1
-    if num == 9 and sum == 0:
-        bot.send_message(chat_id, "Draw! We both are awesome :)")
-        games.finish_user_game(Config.sh_xo_3, chat_id)
+    if check_draw():
         return
 
     games.set_user_game(Config.sh_xo_3, message.chat.id, board_state)
 
+def do_xo_big(message, args):
+    chat_id = message.chat.id
+    board_state = games.get_game_state_for_user(Config.sh_xo_10, message.chat.id)
+    game_spec = TicTacToeXGameSpec(winning_length=5, board_size=10)
+    print("DEBUG: ", args)
+    if board_state is None:
+        board_state = game_spec.new_board()
+
+     # User's move
+    user_move = symbols_to_tuple(args)
+    print("User's move: ", user_move)
+
+    try:
+        board_state = game_spec.apply_move(board_state, user_move, 1)
+    except  ValueError:
+        bot.send_message(chat_id, "The cell is occupied. Try again please \n")
+        return
+    print("User board")
+    bot.send_message(chat_id, "Your turn: \n" + serialize_board(board_state))
+
+    def check_winner():
+        winner = game_spec.has_winner(board_state)
+        if winner == 1:
+            bot.send_message(chat_id, "You won!!!")
+            games.finish_user_game(Config.sh_xo_10, chat_id)
+            return True
+        elif winner == -1:
+            bot.send_message(chat_id, "Bot won!!! Bot is really smart ^ ^")
+            games.finish_user_game(Config.sh_xo_10, chat_id)
+            return True
+        return False
+
+    if check_winner():
+        return
+
+    # Check if it is a Draw
+    def check_draw():
+        sum = 0
+        num = 0
+        for x in board_state:
+            for y in x:
+                sum += y
+                if y != 0:
+                    num += 1
+        if num == 100:
+            bot.send_message(chat_id, "Draw! We both are awesome :)")
+            games.finish_user_game(Config.sh_xo_10, chat_id)
+            return True
+        return False
+
+    if check_draw():
+        return
+
+    # Bot's move
+    bot_move = min_max_alpha_beta(game_spec, board_state, -1, 1000)[1] 
+    board_state = game_spec.apply_move(board_state, bot_move, -1)
+    bot.send_message(chat_id, "Bot's turn: \n" + serialize_board(board_state))
+
+    if check_winner():
+        return
+
+    # Check if it is a Draw
+    if check_draw():
+        return
+
+    games.set_user_game(Config.sh_xo_10, message.chat.id, board_state)
+
 def symbols_to_tuple(s):
     mapping = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'k': 8, 'l': 9,
-               'x': 0, 'y': 1, 'z': 2}
+               'x': 0, 'y': 1, 'z': 2, 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'K': 8, 'L': 9,
+               'X': 0, 'Y': 1, 'Z': 2}
     letter = s[0]
     print(letter)
     number = s[1]
@@ -216,19 +280,15 @@ def serialize_board(board_state):
         print(row)
         for cell in row:
             if cell == 1:
-                serialized += 'x'
+                serialized += ' x '
             elif cell == -1:
-                serialized += 'o'
+                serialized += ' o '
             elif cell == 0:
-                serialized += '.'
+                serialized += ' . '
 
         serialized += '\n'
-    return serialized
-        
-
-def do_xo_big(message, args):
-    pass
-
+    return serialized 
+    
 @bot.message_handler(content_types=["text"])
 def repeat_all_messages(message):
     if re.compile("^[-+]?[0-9]$").match(message.text):
