@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
+
 import telebot
 
+from games.tic_tac_toe import TicTacToeGameSpec
 import logging
 from WolframApi import Wolfram
 import Config
 import re
 import GameState as games
 from Matches import Matches
+from techniques.min_max import min_max_alpha_beta
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -67,6 +70,50 @@ def do_matches(message, args):
         games.set_user_game(Config.sh_matches, message.chat.id, state)
         bot.send_message(message.chat.id, "Sticks lost: " + str(state))
 
+def do_xo_small(message, args):
+    board_state = games.get_game_state_for_user(Config.sh_xo_3, message.chat.id)
+    game_spec = TicTacToeGameSpec()
+    print("DEBUG: ", args)
+    if board_state is None:
+        board_state = game_spec.new_board()
+    # User's move
+    print("Board_state: ", board_state)
+    print("Game_spec ", game_spec)
+    move = symbols_to_tuple(args)
+    new_board_state = game_spec.apply_move(board_state, move, 1)
+    bot.send_message(message.chat.id, "Your turn: \n" + serialize_board(new_board_state))
+
+    # Bot's move
+    bot_move = min_max_alpha_beta(game_spec, board_state, -1, 1000)[1] 
+    newest_board_state = game_spec.apply_move(new_board_state, bot_move, -1)
+    bot.send_message(message.chat.id, "Bot's turn: \n" + serialize_board(newest_board_state))
+    
+    print("Bot Board_state:", newest_board_state)
+    games.set_user_game(Config.sh_xo_3, message.chat.id, newest_board_state)
+
+def symbols_to_tuple(s):
+    mapping = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'k': 8, 'l': 9,
+               'x': 0, 'y': 1, 'z': 3}
+    letter = s[0]
+    print(letter)
+    number = s[1]
+
+    return (mapping[letter], int(number))
+
+def serialize_board(board_state):
+    print("Board_state: ", board_state)
+    serialized = ""
+    for i in range(len(board_state)):
+        for j in range(3):
+            cell = board_state[i][j]
+            print(cell, end='')
+            serialized += str(cell)
+        serialized += '\n'
+    return serialized
+        
+
+def do_xo_big(message, args):
+    pass
 
 @bot.message_handler(content_types=["text"])
 def repeat_all_messages(message):
@@ -78,8 +125,10 @@ def repeat_all_messages(message):
     elif re.compile("^[x-z|X-Z][1-3]$").match(message.text):
         # TODO: integrate TicTacToe 3x3. !!!!!!!!!!!!!!! КОЛЛИЗИИ С ПОЛЕМ 15х15
         # upd: коллизии решены за счёт того что буквы будут с конца алфавита (смекалочка)
-        print("XO 3x3: ", message.text)
-        bot.send_message(message.chat.id, "There XO (3x3) game. Not implemented yet.")
+        #print("XO 3x3: ", message.text)
+
+        do_xo_small(message, message.text)
+        #bot.send_message(message.chat.id, "There XO (3x3) game. Not implemented yet.")
 
     elif re.compile("^[a-o|A-O][0-9]+$").match(message.text):
         # TODO: integrate TicTacToe 15x15
