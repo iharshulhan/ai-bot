@@ -1,14 +1,21 @@
-у меня ни в какую не работал import telegram и я переписал на pytelegrambot
-
-шикарный гайд по ссылке https://groosha.gitbooks.io/telegram-bot-lessons/
-
-GameState.py поможет хранить состояния игр (как у Стаса на js серваке было)
-Нужно лишь чтобы чуваки, которые пилят игры возвращали состояние поля и принимали его соответственно
-и также проверяли правильность хода, иначе пусть возвращают ошибки.
-
-Нужно доделать формат вывода полей пользователю.
-
-Wolfram выкидывает ошибку на запросы по типу "Oh hi Mark". "list index out of range"
-
 # ai-bot
-Telegram bot
+This is telegram bot assistant with some intellect inside.
+
+It provides you ability to play several games in parallel.
+
+1. TicTacToe (3x3)
+input: [x..z][1..3] to pick cell for your next move
+/smallXOclose - command to close your current game
+
+2. TicTacToe (10x10)
+input: [a..j][1..10] to pick cell for your next move
+/bigXOclose - command to close your current game
+
+3. Matches
+input: [1..4] to pick sticks amount
+/matchesclose - command to close your current game
+
+4. Feature to get mathematical knowledge of machine brain
+input any mathematical (or other interesting for machine) request and I'll provide you answer.
+
+P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)
