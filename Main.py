@@ -35,9 +35,12 @@ def unknown(bot, update):
     bot.send_message(update.message.chat_id,
                      text='Sorry, I didn\'t understand you')
 
-
-def solve(message, args):
+@bot.message_handler(commands=['solve'])
+def solve(message):
     try:
+        args = message.text.replace("/solve", "")
+        print("Debug /solve", args)
+
         response_text, response_images = Wolfram.ask(args)
 
         if response_text is None and response_images is None:
@@ -93,12 +96,12 @@ def close_xo3(message):
 
 
 @bot.message_handler(commands=['bigXOclose'])
-def close_xo15(message):
+def close_xo10(message):
     try:
-        games.finish_user_game(Config.sh_xo_15, message.chat.id)
+        games.finish_user_game(Config.sh_xo_10, message.chat.id)
         bot.send_message(message.chat.id, "Game successfully closed.")
     except:
-        logger.log(msg="close None game XO 15x15")
+        logger.log(msg="close None game XO 10x10")
 
 
 @bot.message_handler(commands=['matchesclose'])
@@ -321,12 +324,12 @@ def repeat_all_messages(message):
         do_xo_small(message, message.text)
 
     elif re.compile("^[a-o|A-O][0-9]+$").match(message.text):
-        bot.send_message(message.chat.id, "There XO (15x15) game.")
+        bot.send_message(message.chat.id, "There XO (10x10) game.")
         do_xo_big(message, message.text)
 
-    else:
+    ''' else:
         print("Wolfram: ", message.text)
-        message.chat.id, solve(message=message, args=message.text)
+        message.chat.id, solve(message=message, args=message.text) '''
 
 
 def main():
