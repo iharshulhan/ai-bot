@@ -147,7 +147,7 @@ def do_xo_small(message, args):
         bot.send_message(chat_id, "The cell is occupied. Try again please \n")
         return
     print("User board")
-    bot.send_message(chat_id, "Your turn: \n" + serialize_board(board_state))
+    bot.send_message(chat_id, "Your turn: \n" + serialize_3x3_board(board_state))
 
     def check_winner():
         winner = game_spec.has_winner(board_state)
@@ -185,7 +185,7 @@ def do_xo_small(message, args):
     # Bot's move
     bot_move = min_max_alpha_beta(game_spec, board_state, -1, 1000)[1] 
     board_state = game_spec.apply_move(board_state, bot_move, -1)
-    bot.send_message(chat_id, "Bot's turn: \n" + serialize_board(board_state))
+    bot.send_message(chat_id, "Bot's turn: \n" + serialize_3x3_board(board_state))
 
     if check_winner():
         return
@@ -214,7 +214,7 @@ def do_xo_big(message, args):
         bot.send_message(chat_id, "The cell is occupied. Try again please \n")
         return
     print("User board")
-    bot.send_message(chat_id, "Your turn: \n" + serialize_board(board_state))
+    bot.send_message(chat_id, "Your turn: \n" + serialize_10x10_board(board_state))
 
     def check_winner():
         winner = game_spec.has_winner(board_state)
@@ -252,7 +252,7 @@ def do_xo_big(message, args):
     # Bot's move
     bot_move = min_max_alpha_beta(game_spec, board_state, -1, 1000)[1] 
     board_state = game_spec.apply_move(board_state, bot_move, -1)
-    bot.send_message(chat_id, "Bot's turn: \n" + serialize_board(board_state))
+    bot.send_message(chat_id, "Bot's turn: \n" + serialize_10x10_board(board_state))
 
     if check_winner():
         return
@@ -264,8 +264,8 @@ def do_xo_big(message, args):
     games.set_user_game(Config.sh_xo_10, message.chat.id, board_state)
 
 def symbols_to_tuple(s):
-    mapping = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'k': 8, 'l': 9,
-               'x': 0, 'y': 1, 'z': 2, 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'K': 8, 'L': 9,
+    mapping = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h' : 7, 'i': 8, 'j': 9,
+               'x': 0, 'y': 1, 'z': 2, 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H' : 7, 'I': 8, 'J': 9,
                'X': 0, 'Y': 1, 'Z': 2}
     letter = s[0]
     print(letter)
@@ -273,18 +273,38 @@ def symbols_to_tuple(s):
 
     return (mapping[letter], int(number)-1)
 
-def serialize_board(board_state):
-    #print("Board_state: ", board_state[0], "\n", board_state[1], "\n", board_state[2])
-    serialized = ""
-    for row in board_state:
-        print(row)
-        for cell in row:
+def serialize_3x3_board(board_state):
+    mapping = {1:'X', 2:'Y', 3:'Z'}
+    serialized = "    1  2  3 \n"
+    serialized += "------------ \n"
+    for i in range(3):
+        serialized += str(mapping[i+1]) + "| "
+        for j in range(3):
+            cell = board_state[i][j]
             if cell == 1:
                 serialized += ' x '
             elif cell == -1:
                 serialized += ' o '
             elif cell == 0:
                 serialized += ' . '
+
+        serialized += '\n'
+    return serialized 
+
+def serialize_10x10_board(board_state):
+    mapping = {0:'A', 1:'B', 2:'C', 3:'D', 4:'E', 5:'F', 6:'G', 7:'H', 8:'I', 9:'J'}
+    serialized = "     1   2   3   4  5  6  7  8  9  10\n"
+    serialized += "------------------------------------ \n"
+    for i in range(10):
+        serialized += str(mapping[i]) + "| "
+        for j in range(10):
+            cell = board_state[i][j]
+            if cell == 1:
+                serialized += ' x   ' 
+            elif cell == -1:
+                serialized += ' o   '
+            elif cell == 0:
+                serialized += ' .   '
 
         serialized += '\n'
     return serialized 
@@ -297,16 +317,12 @@ def repeat_all_messages(message):
         do_matches(message, message.text)
 
     elif re.compile("^[x-z|X-Z][1-3]$").match(message.text):
-        # TODO: integrate TicTacToe 3x3. !!!!!!!!!!!!!!! КОЛЛИЗИИ С ПОЛЕМ 15х15
-        # upd: коллизии решены за счёт того что буквы будут с конца алфавита (смекалочка)
-
         bot.send_message(message.chat.id, "There XO (3x3) game.")
         do_xo_small(message, message.text)
 
     elif re.compile("^[a-o|A-O][0-9]+$").match(message.text):
-        # TODO: integrate TicTacToe 15x15
-        print("XO 15x15: ", message.text)
-        bot.send_message(message.chat.id, "There XO (15x15) game. Not implemented yet.")
+        bot.send_message(message.chat.id, "There XO (15x15) game.")
+        do_xo_big(message, message.text)
 
     else:
         print("Wolfram: ", message.text)
