@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # In this Puzzle there are 21 Match Sticks.
 # You and Computer will pick up the sticks one by one.
 # Sticks can be picked from 1 to 4.
@@ -19,7 +21,7 @@ class Matches:
     def __end_game__(message):
         return (message, begin_amount, "")
 
-    def turn(state: int, user_amount: int):
+    def turn(state, user_amount):
         # returns tuple (answer, new_state, bot_amount)
         # There are some cases of game state such as win/lose etc.
         # In this cases all information will be passed through answer value to user

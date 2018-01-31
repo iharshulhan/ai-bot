@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import shelve
 from Config import sh_name
 
