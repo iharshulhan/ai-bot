@@ -71,43 +71,99 @@ def do_matches(message, args):
         bot.send_message(message.chat.id, "Sticks lost: " + str(state))
 
 def do_xo_small(message, args):
+    chat_id = message.chat.id
     board_state = games.get_game_state_for_user(Config.sh_xo_3, message.chat.id)
     game_spec = TicTacToeGameSpec()
     print("DEBUG: ", args)
     if board_state is None:
         board_state = game_spec.new_board()
+
     # User's move
-    print("Board_state: ", board_state)
-    print("Game_spec ", game_spec)
-    move = symbols_to_tuple(args)
-    new_board_state = game_spec.apply_move(board_state, move, 1)
-    bot.send_message(message.chat.id, "Your turn: \n" + serialize_board(new_board_state))
+    user_move = symbols_to_tuple(args)
+    print("User's move: ", user_move)
+
+    
+    try:
+        board_state = game_spec.apply_move(board_state, user_move, 1)
+    except  ValueError:
+        bot.send_message(chat_id, "The cell is occupied. Try again please \n")
+        return
+    print("User board")
+    bot.send_message(chat_id, "Your turn: \n" + serialize_board(board_state))
+
+    winner = game_spec.has_winner(board_state)
+    if winner == 1:
+        bot.send_message(chat_id, "You won!!!")
+        games.finish_user_game(Config.sh_xo_3, chat_id)
+        return
+    elif winner == -1:
+        bot.send_message(chat_id, "Bot won!!! Bot is really smart ^ ^")
+        games.finish_user_game(Config.sh_xo_3, chat_id)
+        return
+    
+    # Check if it is a Draw
+    sum = 0
+    num = 0
+    for x in board_state:
+        for y in x:
+            sum += y
+            if y != 0:
+                num += 1
+    if num == 9 and sum == 0:
+        bot.send_message(chat_id, "Draw! We both are awesome :)")
+        games.finish_user_game(Config.sh_xo_3, chat_id)
+        return
 
     # Bot's move
     bot_move = min_max_alpha_beta(game_spec, board_state, -1, 1000)[1] 
-    newest_board_state = game_spec.apply_move(new_board_state, bot_move, -1)
-    bot.send_message(message.chat.id, "Bot's turn: \n" + serialize_board(newest_board_state))
-    
-    print("Bot Board_state:", newest_board_state)
-    games.set_user_game(Config.sh_xo_3, message.chat.id, newest_board_state)
+    board_state = game_spec.apply_move(board_state, bot_move, -1)
+    bot.send_message(chat_id, "Bot's turn: \n" + serialize_board(board_state))
+
+    winner = game_spec.has_winner(board_state)
+    if winner == 1:
+        bot.send_message(chat_id, "You won!!!")
+        games.finish_user_game(Config.sh_xo_3, chat_id)
+    if winner == -1:
+        bot.send_message(chat_id, "Bot won!!! Bot is really smart ^ ^")
+        games.finish_user_game(Config.sh_xo_3, chat_id)
+
+    # Check if it is a Draw
+    sum = 0
+    num = 0
+    for x in board_state:
+        for y in x:
+            sum += y
+            if y != 0:
+                num += 1
+    if num == 9 and sum == 0:
+        bot.send_message(chat_id, "Draw! We both are awesome :)")
+        games.finish_user_game(Config.sh_xo_3, chat_id)
+        return
+
+    games.set_user_game(Config.sh_xo_3, message.chat.id, board_state)
 
 def symbols_to_tuple(s):
     mapping = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'k': 8, 'l': 9,
-               'x': 0, 'y': 1, 'z': 3}
+               'x': 0, 'y': 1, 'z': 2}
     letter = s[0]
     print(letter)
     number = s[1]
 
-    return (mapping[letter], int(number))
+    return (mapping[letter], int(number)-1)
 
 def serialize_board(board_state):
-    print("Board_state: ", board_state)
+    #print("Board_state: ", board_state[0], "\n", board_state[1], "\n", board_state[2])
     serialized = ""
-    for i in range(len(board_state)):
-        for j in range(3):
-            cell = board_state[i][j]
-            print(cell, end='')
-            serialized += str(cell)
+    for row in board_state:
+        print(row)
+        for cell in row:
+            if cell == 1:
+                serialized += 'x'
+            elif cell == -1:
+                serialized += 'o'
+            elif cell == 0:
+                serialized += '.'
+
         serialized += '\n'
     return serialized
         
@@ -125,10 +181,9 @@ def repeat_all_messages(message):
     elif re.compile("^[x-z|X-Z][1-3]$").match(message.text):
         # TODO: integrate TicTacToe 3x3. !!!!!!!!!!!!!!! КОЛЛИЗИИ С ПОЛЕМ 15х15
         # upd: коллизии решены за счёт того что буквы будут с конца алфавита (смекалочка)
-        #print("XO 3x3: ", message.text)
 
+        bot.send_message(message.chat.id, "There XO (3x3) game.")
         do_xo_small(message, message.text)
-        #bot.send_message(message.chat.id, "There XO (3x3) game. Not implemented yet.")
 
     elif re.compile("^[a-o|A-O][0-9]+$").match(message.text):
         # TODO: integrate TicTacToe 15x15

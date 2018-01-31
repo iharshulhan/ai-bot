@@ -44,6 +44,8 @@ def apply_move(board_state, move, side):
         for x in range(3):
             if move_x == x:
                 temp = list(board_state[x])
+                if temp[move_y] != 0:
+                    raise ValueError
                 temp[move_y] = side
                 yield tuple(temp)
             else:
