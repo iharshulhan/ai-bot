@@ -7,6 +7,15 @@ import re
 import GameState as games
 from Matches import Matches
 
+
+#TODO: add commands in @FatherBot
+#/start
+#/info
+#/matchesclose
+#/smallXOclose
+#/bigXOclose
+#/Stas_comeback
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,16 +56,65 @@ def error(bot, update, error):
 
 @bot.message_handler(commands=['help', 'info', 'h'])
 def help(message):
-    bot.send_message(message.chat.id, "Input first move or math expression to start action")
+    msg = """This bot provides you ability to play several games in parallel.
+
+1. TicTacToe (3x3)
+input: [x..z][1..3] to pick cell for your next move
+/smallXOclose - command to close your current game
+
+2. TicTacToe (10x10)
+input: [a..j][1..10] to pick cell for your next move
+/bigXOclose - command to close your current game
+
+3. Matches
+input: [1..4] to pick sticks amount
+/matchesclose - command to close your current game
+
+4. Feature to get mathematical knowledge of machine brain
+input any mathematical (or other interesting for machine) request and I'll provide you answer.
+
+P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)"""
+    bot.send_message(message.chat.id, msg)
+
+
+@bot.message_handler(commands=['smallXOclose'])
+def close_xo3(message):
+    try:
+        games.finish_user_game(Config.sh_xo_3, message.chat.id)
+        bot.send_message(message.chat.id, "Game successfully closed.")
+    except:
+        logger.log(msg="close None game XO 3x3")
+
+
+@bot.message_handler(commands=['bigXOclose'])
+def close_xo15(message):
+    try:
+        games.finish_user_game(Config.sh_xo_15, message.chat.id)
+        bot.send_message(message.chat.id, "Game successfully closed.")
+    except:
+        logger.log(msg="close None game XO 15x15")
+
+
+@bot.message_handler(commands=['matchesclose'])
+def close_matches(message):
+    try:
+        games.finish_user_game(Config.sh_matches, message.chat.id)
+        bot.send_message(message.chat.id, "Game successfully closed.")
+    except:
+        logger.log(msg="close None game Matches")
+
+
+@bot.message_handler(commands=['Stas_comeback'])
+def send_Stas(message):
+    bot.send_photo(message.chat.id, photo=open('res/stas.jpeg', 'rb'))
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    #TODO: рассказать как ходить
-    pass
+    bot.send_message(message.chat.id, "Hello, user!")
+    help(message)
 
 def do_matches(message, args):
     state = games.get_game_state_for_user(Config.sh_matches, message.chat.id)
-    print("Debug output", args)
     msg, state, bmv = Matches.turn(state, int(args))
     bot.send_message(message.chat.id, msg)
     if not bmv is None:
