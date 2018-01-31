@@ -9,12 +9,11 @@ class Config:
 
 
 class Wolfram:
-    @classmethod
-    def ask(self, query):
+    def ask(query):
         if not query:
             return "Write /solve command with your query.", None
 
-        wolfram_query = " ".join(query)
+        wolfram_query = query
         print("Asking:", wolfram_query)
         client = wolframalpha.Client(Config.APPID)
         respond = client.query(wolfram_query)
