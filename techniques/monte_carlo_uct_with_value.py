@@ -8,8 +8,7 @@ import numpy as np
 from techniques.monte_carlo import _upper_confidence_bounds
 
 
-def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_of_samples, value_func,
-                                           value_weighting, value_random, state_results, state_values, state_samples,
+def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_of_samples, value_random, state_results, state_values, state_samples,
                                            move_func):
     """Evaluate the best from the current board_state for the given side using monte carlo sampling with upper
     confidence bounds for trees.
@@ -63,8 +62,7 @@ def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_
                 if move_states[x] in state_samples:
                     sum = sum + state_samples[move_states[x]]
             log_total_samples = math.log(sum)
-            move = max(move_states_available, key=lambda s: state_values[move_states_available[s]] * value_weighting +
-                                                            _upper_confidence_bounds(
+            move = max(move_states_available, key=lambda s:     _upper_confidence_bounds(
                                                                 state_results[move_states_available[s]],
                                                                 state_samples[move_states_available[s]],
                                                                 log_total_samples))
@@ -76,8 +74,8 @@ def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_
             else:
                 move = random.choice(list(move_states_unvisited.keys()))
             current_board_state = move_states[move]
-            if current_board_state not in state_values:
-                state_values[current_board_state] = current_side * value_func(current_board_state)
+            # if current_board_state not in state_values:
+            #     state_values[current_board_state] = current_side * value_func(current_board_state)
 
         rollout_path.append((current_board_state, current_side, move))
 
@@ -86,6 +84,7 @@ def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_
         result = game_spec.has_winner(current_board_state)
 
     for path_board_state, path_side, move in rollout_path:
+        # print(state_samples[board_state])
         state_samples[path_board_state] += 1.
         result *= path_side
         # normalize results to be between 0 and 1 before this it between -1 and 1
@@ -97,8 +96,7 @@ def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_
     return state_results[board] / state_samples[board], move
 
 
-def monte_carlo_tree_play(game_spec, board_state, side, value_func,
-                          value_weighting, state_results, state_values, state_samples, move_func):
+def monte_carlo_tree_play(game_spec, board_state, side, state_results, state_values, state_samples, move_func):
     """Evaluate the best from the current board_state for the given side using monte carlo sampling with upper
     confidence bounds for trees.
 
@@ -146,21 +144,12 @@ def monte_carlo_tree_play(game_spec, board_state, side, value_func,
         for x in move_states:
             if move_states[x] in state_samples:
                 sum = sum + state_samples[move_states[x]]
-        log_total_samples = math.log(sum)
-        move = max(move_states_available, key=lambda s: state_values[move_states_available[s]] * value_weighting +
-                                                        _upper_confidence_bounds(
-                                                            state_results[move_states_available[s]],
-                                                            state_samples[move_states_available[s]],
-                                                            log_total_samples))
-        current_board_state = move_states_available[move]
+
+        move = max(move_states_available, key=lambda s: state_results[move_states_available[s]] / state_samples[move_states_available[s]])
+        print(state_results[move_states_available[move]] / state_samples[move_states_available[move]])
+
     else:
         # move = max(move_states_unvisited, key=lambda s: state_values[move_states_unvisited[s]])
-        if fl == 0:
-            move = move_func(current_board_state, current_side)
-        else:
-            move = random.choice(list(move_states_unvisited.keys()))
-        current_board_state = move_states[move]
-        if current_board_state not in state_values:
-            state_values[current_board_state] = current_side * value_func(current_board_state)
+        move = move_func(current_board_state, current_side)
 
     return move
