@@ -9,7 +9,8 @@ class Config:
 
 
 class Wolfram:
-    def ask(query):
+    @classmethod
+    def ask(self, query):
         if not query:
             return "Write /solve command with your query.", None
 
