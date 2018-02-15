@@ -104,3 +104,11 @@ ENV/
 .mypy_cache/
 
 .idea/
+
+mont_state_results.p
+mont_state_results.lock
+mont_state_samples.p
+mont_state_values.p
+train_vs_historical.p
+value_network_keras
+shalve.db
