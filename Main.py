@@ -225,8 +225,6 @@ with lock:
         state_results = pickle.load(f)
     with open('mont_state_samples.p', mode='rb') as f:
         state_samples = pickle.load(f)
-    with open('mont_state_values.p', mode='rb') as f:
-        state_values = pickle.load(f)
 
 
 def do_xo_big(message, args):
@@ -285,7 +283,7 @@ def do_xo_big(message, args):
     # Bot's move
     # bot_move = min_max_alpha_beta(game_spec, board_state, -1, 3)[1]
     bot_move = monte_carlo_tree_play(game_spec, board_state, -1,
-                                     state_results, state_values, state_samples, make_move_min_max_train)
+                                     state_results, state_samples, make_move_min_max_train)
     board_state = game_spec.apply_move(board_state, bot_move, -1)
     bot.send_message(chat_id, "Bot's turn: \n" + serialize_10x10_board(board_state))
 

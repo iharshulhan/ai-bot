@@ -70,8 +70,8 @@ def make_move_min_max_train(board_state, side):
 
 def make_move_network_train(board_state, side):
     start_time = time.time()
-    avg_result, move = monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, 1, 0.7,
-                                                              state_results, state_values, state_samples,
+    avg_result, move = monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, 0.7,
+                                                              state_results, state_samples,
                                                               make_move_min_max_train)
     end_time = time.time()
     # print(move, side, end_time - start_time, 'montecarlo', avg_result)
@@ -81,7 +81,7 @@ def make_move_network_train(board_state, side):
 def make_move_network(board_state, side):
     start_time = time.time()
     move = monte_carlo_tree_play(game_spec, board_state, side,
-                                 state_results, state_values, state_samples, make_move_min_max_train)
+                                 state_results, state_samples, make_move_min_max_train)
     end_time = time.time()
     # print(move, side, end_time - start_time, 'montecarlo')
     return move

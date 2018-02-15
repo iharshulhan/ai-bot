@@ -8,7 +8,7 @@ import numpy as np
 from techniques.monte_carlo import _upper_confidence_bounds
 
 
-def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_of_samples, value_random, state_results, state_values, state_samples,
+def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, value_random, state_results, state_samples,
                                            move_func):
     """Evaluate the best from the current board_state for the given side using monte carlo sampling with upper
     confidence bounds for trees.
@@ -17,10 +17,10 @@ def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_
         game_spec (BaseGameSpec): The specification for the game we are evaluating
         board_state (3x3 tuple of int): state of the board
         side (int): side currently to play. +1 for the plus player, -1 for the minus player
-        number_of_samples (int): number of samples rollouts to run from the current position, the higher the number the
-            better the estimation of the position
-        value_func (board_state, side -> float):
-
+        value_random: probability of selecting a random move
+        state_samples: precalculated values
+        state_results: precalculated values
+        move_func: move func when tree is not expanded
 
     Returns:
         (result(int), move(int,int)): The average result for the best move from this position and what that move was.
@@ -31,7 +31,6 @@ def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_
 
     current_side = side
     current_board_state = board_state
-    first_unvisited_node = True
     rollout_path = []
     result = 0
 
@@ -96,7 +95,7 @@ def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, number_
     return state_results[board] / state_samples[board], move
 
 
-def monte_carlo_tree_play(game_spec, board_state, side, state_results, state_values, state_samples, move_func):
+def monte_carlo_tree_play(game_spec, board_state, side, state_results, state_samples, move_func):
     """Evaluate the best from the current board_state for the given side using monte carlo sampling with upper
     confidence bounds for trees.
 
@@ -104,13 +103,13 @@ def monte_carlo_tree_play(game_spec, board_state, side, state_results, state_val
         game_spec (BaseGameSpec): The specification for the game we are evaluating
         board_state (3x3 tuple of int): state of the board
         side (int): side currently to play. +1 for the plus player, -1 for the minus player
-        number_of_samples (int): number of samples rollouts to run from the current position, the higher the number the
-            better the estimation of the position
-        value_func (board_state, side -> float):
-
+        state_samples: precalculated values
+        state_results: precalculated values
+        move_func: move func when tree is not expanded
 
     Returns:
-        (result(int), move(int,int)): The average result for the best move from this position and what that move was.
+        move(int,int): The average result for the best move from this position and what that move was.
+
     """
     # state_results = collections.defaultdict(float)
     # state_samples = collections.defaultdict(float)
@@ -118,7 +117,6 @@ def monte_carlo_tree_play(game_spec, board_state, side, state_results, state_val
 
     current_side = side
     current_board_state = board_state
-    first_unvisited_node = True
     rollout_path = []
     result = 0
 
@@ -146,11 +144,6 @@ def monte_carlo_tree_play(game_spec, board_state, side, state_results, state_val
                 sum = sum + state_samples[move_states[x]]
 
         move = max(move_states_available, key=lambda s: state_results[move_states_available[s]] / state_samples[move_states_available[s]])
-<<<<<<< HEAD
-        print(state_results[move_states_available[move]] / state_samples[move_states_available[move]])
-=======
->>>>>>> ai-xo
-
     else:
         # move = max(move_states_unvisited, key=lambda s: state_values[move_states_unvisited[s]])
         move = move_func(current_board_state, current_side)
