@@ -51,10 +51,10 @@ def solve(message):
 
         if response_text:
             bot.send_message(message.chat.id, "Result: " + response_text)
-
-        for title, image in response_images:
-            bot.send_message(message.chat.id, title + ":")
-            bot.send_photo(message.chat.id, image)
+        if response_images:
+            for title, image in response_images:
+                bot.send_message(message.chat.id, title + ":")
+                bot.send_photo(message.chat.id, image)
 
     except ValueError:
         logging.error("Solve error.")
@@ -83,7 +83,7 @@ input: [1..4] to pick sticks amount
 /matchesclose - command to close your current game
 
 4. Feature to get mathematical knowledge of machine brain
-input any mathematical (or other interesting for machine) request and I'll provide you answer.
+input /solve and any mathematical (or other interesting for machine) request and I'll provide you answer.
 
 P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)"""
     bot.send_message(message.chat.id, msg)

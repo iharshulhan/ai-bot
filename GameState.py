@@ -20,7 +20,8 @@ def finish_user_game(game, chat_id):
     :param game: название игры (из Config.py)
     """
     with shelve.open(sh_name) as storage:
-        del storage[game + str(chat_id)]
+        if game + str(chat_id) in storage:
+            del storage[game + str(chat_id)]
 
 
 def get_game_state_for_user(game, chat_id):
