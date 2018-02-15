@@ -146,7 +146,10 @@ def monte_carlo_tree_play(game_spec, board_state, side, state_results, state_val
                 sum = sum + state_samples[move_states[x]]
 
         move = max(move_states_available, key=lambda s: state_results[move_states_available[s]] / state_samples[move_states_available[s]])
+<<<<<<< HEAD
         print(state_results[move_states_available[move]] / state_samples[move_states_available[move]])
+=======
+>>>>>>> ai-xo
 
     else:
         # move = max(move_states_unvisited, key=lambda s: state_values[move_states_unvisited[s]])
