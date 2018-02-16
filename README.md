@@ -1,8 +1,9 @@
 # ai-bot
 This is telegram bot assistant with some intellect inside.
 
-It provides you ability to play several games in parallel.
+It provides you an ability to play several games in parallel.
 
+# Commands
 1. TicTacToe (3x3)
 input: [x..z][1..3] to pick cell for your next move
 /smallXO - start a game
@@ -25,7 +26,8 @@ input /solve and any mathematical (or other interesting for machine) request and
 5. Translate your text to english by using /translate command
 
 By the way, you can use voice commands and natural phrases in different languages to do those things. 
+For example, type "I want to play that incredible Tic Tac Toe" and start playing.
 
 Also you can try to talk with it, however it still needs to learn a lot.
 
-P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)
+P.S. /Stas_comeback to return Stas Protasov to IU. Use it carefully ;)
