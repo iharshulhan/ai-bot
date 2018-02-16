@@ -39,3 +39,17 @@ def get_game_state_for_user(game, chat_id):
         # Если человек не играет, ничего не возвращаем
         except KeyError:
             return None
+
+
+def get_talk_history(chat_id):
+    with shelve.open(sh_name) as storage:
+        try:
+            last_last_history, last_history, text, prob, = storage[str(chat_id)]
+            return last_last_history, last_history, text, prob
+        except KeyError:
+            return None, None, None, None
+
+
+def set_talk_history(last_last_history, last_history, text, prob, chat_id):
+    with shelve.open(sh_name) as storage:
+        storage[str(chat_id)] = last_last_history, last_history, text, prob

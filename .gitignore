@@ -126,3 +126,11 @@ tdd.py
 Translation.ipynb
 Translation-Copy1.ipynb
 all.norm-sz100-w10-cb0-it1-min100.w2v
+answers_simple
+context_simple
+dialog_simple
+my_model_weights.h5
+my_model_weights20.h5
+my_model_weights_bot.h5
+my_model_weights_discriminator.h5
+vocabulary_movie

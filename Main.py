@@ -5,6 +5,7 @@ import pickle
 import telebot
 from filelock import FileLock
 
+from Seq2SeqTalk import chat, get_model, weights_file, weights_file_GAN
 from games.tic_tac_toe import TicTacToeGameSpec
 from games.tic_tac_toe_x import TicTacToeXGameSpec
 import logging
@@ -84,6 +85,8 @@ input: [1..4] to pick sticks amount
 input /solve and any mathematical (or other interesting for machine) request and I'll provide you answer
 
 5. Translate your text to english by using /translate command
+
+Also you can try to talk wit me, simply by messaging me
 
 P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)"""
     bot.send_message(message.chat.id, msg)
@@ -407,6 +410,19 @@ def translate(message):
     bot.send_message(message.chat.id, 'Translation: ' + text)
 
 
+def talk_with_bot(message):
+    last_last_history, last_history, text, prob = games.get_talk_history(message.chat.id)
+    if last_last_history is None:
+        last_history = ''
+        last_last_history = ''
+        text = ''
+        prob = 0
+    last_last_history, last_history, prob, response = chat(message.from_user.first_name, message.text,
+                                                     last_last_history, last_history, text, prob)
+    games.set_talk_history(last_last_history, last_history, text, prob, message.chat.id)
+    bot.send_message(message.chat.id, response)
+
+
 @bot.message_handler(content_types=["text"])
 def repeat_all_messages(message):
     if re.compile("^[-+]?[0-9]$").match(message.text):
@@ -422,10 +438,8 @@ def repeat_all_messages(message):
         bot.send_message(message.chat.id, "There XO (10x10) game.")
         do_xo_big(message, message.text)
 
-    ''' else:
-        print("Wolfram: ", message.text)
-        message.chat.id, solve(message=message, args=message.text) '''
-
+    else:
+        talk_with_bot(message)
 
 def main():
     """Start the bot."""
