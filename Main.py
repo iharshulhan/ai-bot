@@ -12,16 +12,10 @@ from WolframApi import Wolfram
 import Config
 import re
 import GameState as games
+import Translation
 from Matches import Matches
 from techniques.min_max import min_max_alpha_beta
 
-# TODO: add commands in @FatherBot
-# /start
-# /info
-# /matchesclose
-# /smallXOclose
-# /bigXOclose
-# /Stas_comeback
 from techniques.monte_carlo_uct_with_value import monte_carlo_tree_play
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -72,24 +66,30 @@ def help(message):
 
 1. TicTacToe (3x3)
 input: [x..z][1..3] to pick cell for your next move
+/smallXO - start a game
 /smallXOclose - command to close your current game
 
 2. TicTacToe (10x10)
 input: [a..j][1..10] to pick cell for your next move
+input: [x..z][1..3] to pick cell for your next move
+/bigXO - start a game
 /bigXOclose - command to close your current game
 
 3. Matches
 input: [1..4] to pick sticks amount
+/matches - start a new game
 /matchesclose - command to close your current game
 
 4. Feature to get mathematical knowledge of machine brain
-input /solve and any mathematical (or other interesting for machine) request and I'll provide you answer.
+input /solve and any mathematical (or other interesting for machine) request and I'll provide you answer
+
+5. Translate your text to english by using /translate command
 
 P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)"""
     bot.send_message(message.chat.id, msg)
 
 
-@bot.message_handler(commands=['smallXOclose'])
+@bot.message_handler(commands=['smallXOclose', 'smallxoclose'])
 def close_xo3(message):
     try:
         games.finish_user_game(Config.sh_xo_3, message.chat.id)
@@ -98,7 +98,7 @@ def close_xo3(message):
         logger.log(msg="close None game XO 3x3")
 
 
-@bot.message_handler(commands=['bigXOclose'])
+@bot.message_handler(commands=['bigXOclose', 'bigxoclose'])
 def close_xo10(message):
     try:
         games.finish_user_game(Config.sh_xo_10, message.chat.id)
@@ -127,15 +127,38 @@ def start(message):
     help(message)
 
 
+@bot.message_handler(commands=['matches'])
+def print_matches(message):
+    state = games.get_game_state_for_user(Config.sh_matches, message.chat.id)
+    bot.send_message(message.chat.id, "Let's play! We have " + str(state) + " sticks left. Your turn")
+
+
 def do_matches(message, args):
     state = games.get_game_state_for_user(Config.sh_matches, message.chat.id)
     msg, state, bmv = Matches.turn(state, int(args))
     bot.send_message(message.chat.id, msg)
+    if bmv == 'new':
+        games.set_user_game(Config.sh_matches, message.chat.id, state)
+        print_matches(message)
+        return
+
     if not bmv is None:
-        bot.send_message(message.chat.id, "Bot's move: " + str(bmv))
+        bot.send_message(message.chat.id, "I'll take: " + str(bmv))
     if not state is None:
         games.set_user_game(Config.sh_matches, message.chat.id, state)
-        bot.send_message(message.chat.id, "Sticks lost: " + str(state))
+        bot.send_message(message.chat.id, "Sticks left: " + str(state))
+
+
+@bot.message_handler(commands=['smallXO', 'smallxo', 'smallXo', 'smallxO'])
+def print_small_xo(message):
+    chat_id = message.chat.id
+    board_state = games.get_game_state_for_user(Config.sh_xo_3, message.chat.id)
+    game_spec = TicTacToeGameSpec()
+    if board_state is None:
+        board_state = game_spec.new_board()
+
+    bot.send_message(chat_id, "Make a move: \n" + serialize_3x3_board(board_state))
+    games.set_user_game(Config.sh_xo_3, message.chat.id, board_state)
 
 
 def do_xo_small(message, args):
@@ -171,6 +194,8 @@ def do_xo_small(message, args):
         return False
 
     if check_winner():
+        bot.send_message(chat_id, "Let's try again!")
+        print_small_xo(message)
         return
 
     # Check if it is a Draw
@@ -189,6 +214,8 @@ def do_xo_small(message, args):
         return False
 
     if check_draw():
+        bot.send_message(chat_id, "Let's try again!")
+        print_small_xo(message)
         return
 
     # Bot's move
@@ -197,10 +224,14 @@ def do_xo_small(message, args):
     bot.send_message(chat_id, "Bot's turn: \n" + serialize_3x3_board(board_state))
 
     if check_winner():
+        bot.send_message(chat_id, "Let's try again!")
+        print_small_xo(message)
         return
 
     # Check if it is a Draw
     if check_draw():
+        bot.send_message(chat_id, "Let's try again!")
+        print_small_xo(message)
         return
 
     games.set_user_game(Config.sh_xo_3, message.chat.id, board_state)
@@ -225,6 +256,18 @@ with lock:
         state_results = pickle.load(f)
     with open('mont_state_samples.p', mode='rb') as f:
         state_samples = pickle.load(f)
+
+
+@bot.message_handler(commands=['bigXO', 'bigxo', 'bigXo', 'bigxO'])
+def print_big_xo(message):
+    chat_id = message.chat.id
+    board_state = games.get_game_state_for_user(Config.sh_xo_10, message.chat.id)
+    game_spec = TicTacToeXGameSpec(winning_length=5, board_size=10)
+    if board_state is None:
+        board_state = game_spec.new_board()
+
+    bot.send_message(chat_id, "Make a move: \n" + serialize_10x10_board(board_state))
+    games.set_user_game(Config.sh_xo_10, message.chat.id, board_state)
 
 
 def do_xo_big(message, args):
@@ -260,6 +303,8 @@ def do_xo_big(message, args):
         return False
 
     if check_winner():
+        bot.send_message(chat_id, "Let's try again!")
+        print_big_xo(message)
         return
 
     # Check if it is a Draw
@@ -278,6 +323,8 @@ def do_xo_big(message, args):
         return False
 
     if check_draw():
+        bot.send_message(chat_id, "Let's try again!")
+        print_big_xo(message)
         return
 
     # Bot's move
@@ -288,10 +335,14 @@ def do_xo_big(message, args):
     bot.send_message(chat_id, "Bot's turn: \n" + serialize_10x10_board(board_state))
 
     if check_winner():
+        bot.send_message(chat_id, "Let's try again!")
+        print_big_xo(message)
         return
 
     # Check if it is a Draw
     if check_draw():
+        bot.send_message(chat_id, "Let's try again!")
+        print_big_xo(message)
         return
 
     games.set_user_game(Config.sh_xo_10, message.chat.id, board_state)
@@ -347,6 +398,13 @@ def serialize_10x10_board(board_state):
 
         serialized += '\n'
     return serialized
+
+
+@bot.message_handler(commands=['translate'])
+def translate(message):
+    args = message.text.replace("/translate", "")
+    text = Translation.googleTranslate(args)
+    bot.send_message(message.chat.id, 'Translation: ' + text)
 
 
 @bot.message_handler(content_types=["text"])
