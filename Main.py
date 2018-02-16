@@ -1,28 +1,28 @@
 # -*- coding: utf-8 -*-
 import collections
+import uuid
 import pickle
+from time import sleep
 
 import telebot
 from filelock import FileLock
 
+from Seq2SeqTalk import chat, get_model, weights_file, weights_file_GAN
 from games.tic_tac_toe import TicTacToeGameSpec
 from games.tic_tac_toe_x import TicTacToeXGameSpec
 import logging
 from WolframApi import Wolfram
+from VoiceRecognizerApi import *
 import Config
 import re
 import GameState as games
+import Translation
 from Matches import Matches
 from techniques.min_max import min_max_alpha_beta
 
-# TODO: add commands in @FatherBot
-# /start
-# /info
-# /matchesclose
-# /smallXOclose
-# /bigXOclose
-# /Stas_comeback
 from techniques.monte_carlo_uct_with_value import monte_carlo_tree_play
+
+from TextToCommand import text_to_command
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -36,6 +36,7 @@ bot = telebot.TeleBot(Config.token)
 def unknown(bot, update):
     bot.send_message(update.message.chat_id,
                      text='Sorry, I didn\'t understand you')
+
 
 @bot.message_handler(commands=['solve'])
 def solve(message):
@@ -72,24 +73,34 @@ def help(message):
 
 1. TicTacToe (3x3)
 input: [x..z][1..3] to pick cell for your next move
+/smallXO - start a game
 /smallXOclose - command to close your current game
 
 2. TicTacToe (10x10)
 input: [a..j][1..10] to pick cell for your next move
+input: [x..z][1..3] to pick cell for your next move
+/bigXO - start a game
 /bigXOclose - command to close your current game
 
 3. Matches
 input: [1..4] to pick sticks amount
+/matches - start a new game
 /matchesclose - command to close your current game
 
 4. Feature to get mathematical knowledge of machine brain
-input /solve and any mathematical (or other interesting for machine) request and I'll provide you answer.
+input /solve and any mathematical (or other interesting for machine) request and I'll provide you answer
+
+5. Translate your text to english by using /translate command
+
+By the way, you can use voice commands and natural phrases in different languages to do those things. 
+
+Also you can try to talk with it, however it still needs to learn a lot.
 
 P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)"""
     bot.send_message(message.chat.id, msg)
 
 
-@bot.message_handler(commands=['smallXOclose'])
+@bot.message_handler(commands=['smallXOclose', 'smallxoclose'])
 def close_xo3(message):
     try:
         games.finish_user_game(Config.sh_xo_3, message.chat.id)
@@ -98,7 +109,7 @@ def close_xo3(message):
         logger.log(msg="close None game XO 3x3")
 
 
-@bot.message_handler(commands=['bigXOclose'])
+@bot.message_handler(commands=['bigXOclose', 'bigxoclose'])
 def close_xo10(message):
     try:
         games.finish_user_game(Config.sh_xo_10, message.chat.id)
@@ -127,18 +138,42 @@ def start(message):
     help(message)
 
 
+@bot.message_handler(commands=['matches'])
+def print_matches(message):
+    state = games.get_game_state_for_user(Config.sh_matches, message.chat.id)
+    bot.send_message(message.chat.id, "Let's play! We have " + str(state) + " sticks left. Your turn")
+
+
 def do_matches(message, args):
     state = games.get_game_state_for_user(Config.sh_matches, message.chat.id)
     msg, state, bmv = Matches.turn(state, int(args))
     bot.send_message(message.chat.id, msg)
+    if bmv == 'new':
+        games.set_user_game(Config.sh_matches, message.chat.id, state)
+        print_matches(message)
+        return
+
     if not bmv is None:
-        bot.send_message(message.chat.id, "Bot's move: " + str(bmv))
+        bot.send_message(message.chat.id, "I'll take: " + str(bmv))
     if not state is None:
         games.set_user_game(Config.sh_matches, message.chat.id, state)
-        bot.send_message(message.chat.id, "Sticks lost: " + str(state))
+        bot.send_message(message.chat.id, "Sticks left: " + str(state))
+
+
+@bot.message_handler(commands=['smallXO', 'smallxo', 'smallXo', 'smallxO'])
+def print_small_xo(message):
+    chat_id = message.chat.id
+    board_state = games.get_game_state_for_user(Config.sh_xo_3, message.chat.id)
+    game_spec = TicTacToeGameSpec()
+    if board_state is None:
+        board_state = game_spec.new_board()
+
+    bot.send_message(chat_id, "Make a move: \n" + serialize_3x3_board(board_state))
+    games.set_user_game(Config.sh_xo_3, message.chat.id, board_state)
 
 
 def do_xo_small(message, args):
+    sleep(3)
     chat_id = message.chat.id
     board_state = games.get_game_state_for_user(Config.sh_xo_3, message.chat.id)
     game_spec = TicTacToeGameSpec()
@@ -171,6 +206,8 @@ def do_xo_small(message, args):
         return False
 
     if check_winner():
+        bot.send_message(chat_id, "Let's try again!")
+        print_small_xo(message)
         return
 
     # Check if it is a Draw
@@ -189,6 +226,8 @@ def do_xo_small(message, args):
         return False
 
     if check_draw():
+        bot.send_message(chat_id, "Let's try again!")
+        print_small_xo(message)
         return
 
     # Bot's move
@@ -197,10 +236,14 @@ def do_xo_small(message, args):
     bot.send_message(chat_id, "Bot's turn: \n" + serialize_3x3_board(board_state))
 
     if check_winner():
+        bot.send_message(chat_id, "Let's try again!")
+        print_small_xo(message)
         return
 
     # Check if it is a Draw
     if check_draw():
+        bot.send_message(chat_id, "Let's try again!")
+        print_small_xo(message)
         return
 
     games.set_user_game(Config.sh_xo_3, message.chat.id, board_state)
@@ -227,7 +270,20 @@ with lock:
         state_samples = pickle.load(f)
 
 
+@bot.message_handler(commands=['bigXO', 'bigxo', 'bigXo', 'bigxO'])
+def print_big_xo(message):
+    chat_id = message.chat.id
+    board_state = games.get_game_state_for_user(Config.sh_xo_10, message.chat.id)
+    game_spec = TicTacToeXGameSpec(winning_length=5, board_size=10)
+    if board_state is None:
+        board_state = game_spec.new_board()
+
+    bot.send_message(chat_id, "Make a move: \n" + serialize_10x10_board(board_state))
+    games.set_user_game(Config.sh_xo_10, message.chat.id, board_state)
+
+
 def do_xo_big(message, args):
+    sleep(1.5)
     chat_id = message.chat.id
     board_state = games.get_game_state_for_user(Config.sh_xo_10, message.chat.id)
     game_spec = TicTacToeXGameSpec(winning_length=5, board_size=10)
@@ -260,6 +316,8 @@ def do_xo_big(message, args):
         return False
 
     if check_winner():
+        bot.send_message(chat_id, "Let's try again!")
+        print_big_xo(message)
         return
 
     # Check if it is a Draw
@@ -278,6 +336,8 @@ def do_xo_big(message, args):
         return False
 
     if check_draw():
+        bot.send_message(chat_id, "Let's try again!")
+        print_big_xo(message)
         return
 
     # Bot's move
@@ -288,10 +348,14 @@ def do_xo_big(message, args):
     bot.send_message(chat_id, "Bot's turn: \n" + serialize_10x10_board(board_state))
 
     if check_winner():
+        bot.send_message(chat_id, "Let's try again!")
+        print_big_xo(message)
         return
 
     # Check if it is a Draw
     if check_draw():
+        bot.send_message(chat_id, "Let's try again!")
+        print_big_xo(message)
         return
 
     games.set_user_game(Config.sh_xo_10, message.chat.id, board_state)
@@ -302,7 +366,7 @@ def symbols_to_tuple(s):
                'x': 0, 'y': 1, 'z': 2, 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9,
                'X': 0, 'Y': 1, 'Z': 2}
     letter = s[0]
-    print(letter)
+    # print(letter)
     if len(s) > 2:
         number = s[1] + s[2]
     else:
@@ -349,11 +413,56 @@ def serialize_10x10_board(board_state):
     return serialized
 
 
+@bot.message_handler(commands=['translate'])
+def translate(message):
+    args = message.text.replace("/translate", "")
+    text = Translation.googleTranslate(args)
+    bot.send_message(message.chat.id, 'Translation: ' + text)
+    return text
+
+
+def talk_with_bot(message):
+    last_last_history, last_history, text, prob = games.get_talk_history(message.chat.id)
+    if last_last_history is None:
+        last_history = ''
+        last_last_history = ''
+        text = ''
+        prob = 0
+    last_last_history, last_history, prob, response = chat(message.from_user.first_name, message.text,
+                                                           last_last_history, last_history, text, prob)
+    games.set_talk_history(last_last_history, last_history, text, prob, message.chat.id)
+    bot.send_message(message.chat.id, response)
+
+
+def sentence_command(message):
+    text = message.text
+    if has_cyrillic(text):
+        message.text = translate(message)
+    # print(message.text)
+    cmd, arg = text_to_command(message.text)
+    if cmd == 'play':
+        if arg == 'tictactoe3x3':
+            print_small_xo(message)
+        elif arg == 'tictactoe10x10':
+            print_big_xo(message)
+        elif arg == 'matches':
+            print_matches(message)
+    elif cmd == 'close':
+        if arg == 'tictactoe3x3':
+            close_xo3(message)
+        elif arg == 'tictactoe10x10':
+            close_xo10(message)
+        elif arg == 'matches':
+            close_matches(message)
+    elif cmd == 'evaluate':
+        solve(message)
+    else:
+        talk_with_bot(message)
+
+
 @bot.message_handler(content_types=["text"])
 def repeat_all_messages(message):
     if re.compile("^[-+]?[0-9]$").match(message.text):
-        # TODO: integrate Matches game and rooms. May be limit will be not almost 9 due to game rules
-        print("Matches: ", message.text)
         do_matches(message, message.text)
 
     elif re.compile("^[x-z|X-Z][1-3]$").match(message.text):
@@ -364,9 +473,28 @@ def repeat_all_messages(message):
         bot.send_message(message.chat.id, "There XO (10x10) game.")
         do_xo_big(message, message.text)
 
-    ''' else:
-        print("Wolfram: ", message.text)
-        message.chat.id, solve(message=message, args=message.text) '''
+    else:
+        sentence_command(message)
+
+
+@bot.message_handler(content_types=["voice"])
+def voice_processing(message):
+    try:
+        metadata = bot.get_file(message.voice.file_id)
+        audio = requests.get("https://api.telegram.org/file/bot{0}/{1}".format(Config.token, metadata.file_path))
+        audio = VoiceRecognizer.ogg2pcm(audio.content)
+        text = VoiceRecognizer.ask(audio, message.voice.file_size, str(uuid.uuid4()).replace("-", ""))
+        # print(text)
+        bot.send_message(message.chat.id, 'Got your message: ' + text)
+        message.text = text
+        sentence_command(message)
+    except Exception as e:
+        print(e)
+        bot.send_message(message.chat.id, "I cannot recognize it. Try again.")
+
+
+def has_cyrillic(text):
+    return bool(re.search('[а-яА-Я]', text))
 
 
 def main():
