@@ -19,6 +19,8 @@ from techniques.min_max import min_max_alpha_beta
 
 from techniques.monte_carlo_uct_with_value import monte_carlo_tree_play
 
+from TextToCommand import text_to_command
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,6 +33,7 @@ bot = telebot.TeleBot(Config.token)
 def unknown(bot, update):
     bot.send_message(update.message.chat_id,
                      text='Sorry, I didn\'t understand you')
+
 
 @bot.message_handler(commands=['solve'])
 def solve(message):
@@ -418,7 +421,7 @@ def talk_with_bot(message):
         text = ''
         prob = 0
     last_last_history, last_history, prob, response = chat(message.from_user.first_name, message.text,
-                                                     last_last_history, last_history, text, prob)
+                                                           last_last_history, last_history, text, prob)
     games.set_talk_history(last_last_history, last_history, text, prob, message.chat.id)
     bot.send_message(message.chat.id, response)
 
@@ -439,7 +442,27 @@ def repeat_all_messages(message):
         do_xo_big(message, message.text)
 
     else:
-        talk_with_bot(message)
+        print(text_to_command(message.text))
+        cmd, arg = text_to_command(message.text)
+        if cmd == 'play':
+            if arg == 'tictactoe3x3':
+                print_small_xo(message)
+            elif arg == 'tictactoe10x10':
+                print_big_xo(message)
+            elif arg == 'matches':
+                print_matches(message)
+        elif cmd == 'close':
+            if arg == 'tictactoe3x3':
+                close_xo3(message)
+            elif arg == 'tictactoe10x10':
+                close_xo10(message)
+            elif arg == 'matches':
+                close_matches(message)
+        elif cmd == 'evaluate':
+            solve(message)
+        else:
+            talk_with_bot(message)
+
 
 def main():
     """Start the bot."""
