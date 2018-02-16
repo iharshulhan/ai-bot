@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import collections
+import uuid
 import pickle
-
 import telebot
 from filelock import FileLock
 
@@ -9,6 +9,7 @@ from games.tic_tac_toe import TicTacToeGameSpec
 from games.tic_tac_toe_x import TicTacToeXGameSpec
 import logging
 from WolframApi import Wolfram
+from VoiceRecognizerApi import *
 import Config
 import re
 import GameState as games
@@ -36,6 +37,7 @@ bot = telebot.TeleBot(Config.token)
 def unknown(bot, update):
     bot.send_message(update.message.chat_id,
                      text='Sorry, I didn\'t understand you')
+
 
 @bot.message_handler(commands=['solve'])
 def solve(message):
@@ -367,6 +369,18 @@ def repeat_all_messages(message):
     ''' else:
         print("Wolfram: ", message.text)
         message.chat.id, solve(message=message, args=message.text) '''
+
+
+@bot.message_handler(content_types=["voice"])
+def voice_processing(message):
+    try:
+        metadata = bot.get_file(message.voice.file_id)
+        audio = requests.get("https://api.telegram.org/file/bot{0}/{1}".format(Config.token, metadata.file_path))
+        audio = VoiceRecognizer.ogg2pcm(audio.content)
+        text = VoiceRecognizer.ask(audio, message.voice.file_size, str(uuid.uuid4()).replace("-", ""))
+        bot.send_message(message.chat.id, text)
+    except Exception:
+        bot.send_message(message.chat.id, "I cannot recognize it. Try again.")
 
 
 def main():

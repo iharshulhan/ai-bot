@@ -1,7 +1,6 @@
 token = "480091903:AAF6jmUHh1IjC1xjskpC2YOyA0TA36xYyq0"
-
+yandex_api = "acfdaae6-72f9-4149-b07d-16ff6b326d06"
 sh_name = "shalve.db"
-
 sh_xo_3 = "sh3_"
 sh_xo_10 = "sh10_"
 sh_matches = "shm_"
