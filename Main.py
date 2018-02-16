@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import collections
+import uuid
 import pickle
-
 import telebot
 from filelock import FileLock
 
@@ -10,6 +10,7 @@ from games.tic_tac_toe import TicTacToeGameSpec
 from games.tic_tac_toe_x import TicTacToeXGameSpec
 import logging
 from WolframApi import Wolfram
+from VoiceRecognizerApi import *
 import Config
 import re
 import GameState as games
@@ -88,6 +89,8 @@ input: [1..4] to pick sticks amount
 input /solve and any mathematical (or other interesting for machine) request and I'll provide you answer
 
 5. Translate your text to english by using /translate command
+
+By the way, you can use voice commands and natural phrases in different languages to do those things. 
 
 Also you can try to talk wit me, simply by messaging me
 
@@ -359,7 +362,7 @@ def symbols_to_tuple(s):
                'x': 0, 'y': 1, 'z': 2, 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9,
                'X': 0, 'Y': 1, 'Z': 2}
     letter = s[0]
-    print(letter)
+    # print(letter)
     if len(s) > 2:
         number = s[1] + s[2]
     else:
@@ -411,6 +414,7 @@ def translate(message):
     args = message.text.replace("/translate", "")
     text = Translation.googleTranslate(args)
     bot.send_message(message.chat.id, 'Translation: ' + text)
+    return text
 
 
 def talk_with_bot(message):
@@ -426,11 +430,35 @@ def talk_with_bot(message):
     bot.send_message(message.chat.id, response)
 
 
+def sentence_command(message):
+    text = message.text
+    if has_cyrillic(text):
+        message.text = translate(message)
+    # print(message.text)
+    cmd, arg = text_to_command(message.text)
+    if cmd == 'play':
+        if arg == 'tictactoe3x3':
+            print_small_xo(message)
+        elif arg == 'tictactoe10x10':
+            print_big_xo(message)
+        elif arg == 'matches':
+            print_matches(message)
+    elif cmd == 'close':
+        if arg == 'tictactoe3x3':
+            close_xo3(message)
+        elif arg == 'tictactoe10x10':
+            close_xo10(message)
+        elif arg == 'matches':
+            close_matches(message)
+    elif cmd == 'evaluate':
+        solve(message)
+    else:
+        talk_with_bot(message)
+
+
 @bot.message_handler(content_types=["text"])
 def repeat_all_messages(message):
     if re.compile("^[-+]?[0-9]$").match(message.text):
-        # TODO: integrate Matches game and rooms. May be limit will be not almost 9 due to game rules
-        print("Matches: ", message.text)
         do_matches(message, message.text)
 
     elif re.compile("^[x-z|X-Z][1-3]$").match(message.text):
@@ -442,26 +470,27 @@ def repeat_all_messages(message):
         do_xo_big(message, message.text)
 
     else:
-        print(text_to_command(message.text))
-        cmd, arg = text_to_command(message.text)
-        if cmd == 'play':
-            if arg == 'tictactoe3x3':
-                print_small_xo(message)
-            elif arg == 'tictactoe10x10':
-                print_big_xo(message)
-            elif arg == 'matches':
-                print_matches(message)
-        elif cmd == 'close':
-            if arg == 'tictactoe3x3':
-                close_xo3(message)
-            elif arg == 'tictactoe10x10':
-                close_xo10(message)
-            elif arg == 'matches':
-                close_matches(message)
-        elif cmd == 'evaluate':
-            solve(message)
-        else:
-            talk_with_bot(message)
+        sentence_command(message)
+
+
+@bot.message_handler(content_types=["voice"])
+def voice_processing(message):
+    try:
+        metadata = bot.get_file(message.voice.file_id)
+        audio = requests.get("https://api.telegram.org/file/bot{0}/{1}".format(Config.token, metadata.file_path))
+        audio = VoiceRecognizer.ogg2pcm(audio.content)
+        text = VoiceRecognizer.ask(audio, message.voice.file_size, str(uuid.uuid4()).replace("-", ""))
+        # print(text)
+        bot.send_message(message.chat.id, 'Got your message: ' + text)
+        message.text = text
+        sentence_command(message)
+    except Exception as e:
+        print(e)
+        bot.send_message(message.chat.id, "I cannot recognize it. Try again.")
+
+
+def has_cyrillic(text):
+    return bool(re.search('[а-яА-Я]', text))
 
 
 def main():

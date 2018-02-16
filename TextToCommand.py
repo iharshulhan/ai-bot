@@ -21,7 +21,7 @@ MATCHES_REGEX = re.compile("matches\s*", re.IGNORECASE)
 
 PLAY_COMMANDS = ['play', 'run', 'start']
 STOP_COMMANDS = ['stop', 'close', 'exit', 'quit']
-WOLFRAM_COMMANDS = ['evaluate', 'solve', 'find']
+WOLFRAM_COMMANDS = ['evaluate', 'solve', 'find', 'count']
 
 
 def _parse(sentence):
@@ -54,7 +54,7 @@ def _parse(sentence):
         elif sub != '' and obj == '' and (tag[1] == 'NN' or tag[1] == 'NNP'):
             prop += tag[0] + ' '
 
-    print('Subject: ' + sub + '\nAction: ' + act + '\nObject: ' + obj + '\nProperty: ' + prop)
+    # print('Subject: ' + sub + '\nAction: ' + act + '\nObject: ' + obj + '\nProperty: ' + prop)
     with open('TextToCommand.log', 'a') as log_file:
         log_file.write('Subject: ' + sub + '\nAction: ' + act + '\nObject: ' + obj + '\nProperty: ' + prop + '\n\n')
     return (sub, act, obj, prop)
@@ -63,7 +63,6 @@ def _parse(sentence):
 def text_to_command(sentence):
     sub, act, obj, prop = _parse(sentence)
 
-    print(sub, any(cmd in sub for cmd in PLAY_COMMANDS))
     if any(cmd in act for cmd in PLAY_COMMANDS) or any(cmd in sub for cmd in PLAY_COMMANDS):
         if TICTACTOE_3X3_REGEX.match(obj):
             return 'play', 'tictactoe3x3'
@@ -73,6 +72,8 @@ def text_to_command(sentence):
             return 'play', 'tictactoe10x10'
         elif MATCHES_REGEX.match(obj):
             return 'play', 'matches'
+        else:
+            return None, None
 
     elif any(cmd in act for cmd in STOP_COMMANDS) or any(cmd in sub for cmd in STOP_COMMANDS):
         if TICTACTOE_3X3_REGEX.match(obj):
@@ -81,6 +82,8 @@ def text_to_command(sentence):
             return 'close', 'tictactoe10x10'
         elif MATCHES_REGEX.match(obj):
             return 'close', 'matches'
+        else:
+            return None, None
     elif any(cmd in act for cmd in WOLFRAM_COMMANDS) or any(cmd in sub for cmd in WOLFRAM_COMMANDS):
         if obj == None:
             obj = ''
