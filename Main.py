@@ -2,6 +2,8 @@
 import collections
 import uuid
 import pickle
+from time import sleep
+
 import telebot
 from filelock import FileLock
 
@@ -92,7 +94,7 @@ input /solve and any mathematical (or other interesting for machine) request and
 
 By the way, you can use voice commands and natural phrases in different languages to do those things. 
 
-Also you can try to talk wit me, simply by messaging me
+Also you can try to talk with it, however it still needs to learn a lot.
 
 P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)"""
     bot.send_message(message.chat.id, msg)
@@ -171,6 +173,7 @@ def print_small_xo(message):
 
 
 def do_xo_small(message, args):
+    sleep(3)
     chat_id = message.chat.id
     board_state = games.get_game_state_for_user(Config.sh_xo_3, message.chat.id)
     game_spec = TicTacToeGameSpec()
@@ -280,6 +283,7 @@ def print_big_xo(message):
 
 
 def do_xo_big(message, args):
+    sleep(1.5)
     chat_id = message.chat.id
     board_state = games.get_game_state_for_user(Config.sh_xo_10, message.chat.id)
     game_spec = TicTacToeXGameSpec(winning_length=5, board_size=10)
