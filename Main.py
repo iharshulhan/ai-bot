@@ -23,6 +23,9 @@ from techniques.min_max import min_max_alpha_beta
 from techniques.monte_carlo_uct_with_value import monte_carlo_tree_play
 
 from TextToCommand import text_to_command
+import cv2
+import numpy as np
+from YoloPostprocess import post_process
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -490,6 +493,26 @@ def voice_processing(message):
     except Exception as e:
         print(e)
         bot.send_message(message.chat.id, "I cannot recognize it. Try again.")
+
+
+# object-recognition
+@bot.message_handler(content_types=["photo"])
+def object_recognition(message):
+    try:
+        bot.send_message(message.chat.id, "Got your image. Please, wait.")
+        file = bot.get_file(message.photo[-1].file_id)
+        image = bot.download_file(file.file_path)
+        image = cv2.imdecode(np.fromstring(image, np.uint8), cv2.IMREAD_COLOR)
+        resized = cv2.resize(image, (416, 416))
+        blob = cv2.dnn.blobFromImage(resized, 1 / 255)
+        net = cv2.dnn.readNetFromDarknet("yolo/yolov2.cfg", "yolo/yolov2.weights")
+        net.setInput(blob, "data")
+        result = net.forward("detection_out")
+        post_process(net, 0.6, image, result)
+        bot.send_photo(message.chat.id, cv2.imencode(".png", image)[1].tostring())
+    except Exception as e:
+        print(e)
+        bot.send_message(message.chat.id, "I can't stand when it happens but something went wrong :(")
 
 
 def has_cyrillic(text):
