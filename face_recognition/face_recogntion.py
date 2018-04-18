@@ -8,7 +8,7 @@ from shutil import copy2
 from face_recognition.align import AlignDlib
 from face_recognition.model import create_model
 
-THRESHOLD = 0.56  # this threshold was found to be the best providing accuracy of 96%
+THRESHOLD = 0.8  # this threshold was found to be the best
 
 nn_pretrained = create_model()
 nn_pretrained._make_predict_function()
@@ -36,13 +36,19 @@ def align_image(img):
 
 
 def embedding_from_image(image_path):
+    if os.path.exists(f'{image_path}.npy'):
+        return np.load(f'{image_path}.npy')
+
     img = load_image(image_path)
     img = align_image(img)
-
     # scale RGB values to interval [0,1]
     img = (img / 255.).astype(np.float32)
+
     # obtain embedding vector for image
-    return nn_pretrained.predict(np.expand_dims(img, axis=0))[0]
+    emb = nn_pretrained.predict(np.expand_dims(img, axis=0))[0]
+    np.save(f'{image_path}.npy', emb)
+
+    return emb
 
 
 def find_face_in_collection(face_file_name: str, dir_name: str = 'face_recognition/images') -> [str, None]:
@@ -62,17 +68,32 @@ def find_face_in_collection(face_file_name: str, dir_name: str = 'face_recogniti
     best_image = None
 
     for i in os.listdir(dir_name):
+        num_of_pictures = 0
+        avg_score = 0
+        fl = 0
         for f in os.listdir(os.path.join(dir_name, i)):
+            if '.npy' in f:
+                continue
             try:
                 face_to_compare = embedding_from_image(os.path.join(dir_name, i, f))
             except Exception as e:
                 print(f'Could not load an image from {os.path.join(dir_name, i, f)}. Error {e}')
+                os.remove(os.path.join(dir_name, i, f))
                 continue
 
             dist = distance_between_embedding(face, face_to_compare)
-            if dist <= THRESHOLD and dist < best_score:
-                best_score = dist
-                best_image = i  # name of a person
+            if 'Arn' in i:
+                print('Arny', dist)
+            if 'Ilgiz' in i:
+                print('Ilgiz', dist)
+            avg_score += dist
+            if dist <= THRESHOLD:
+                fl = 1
+            num_of_pictures += 1
+
+        if fl != 0 and (avg_score / num_of_pictures) < best_score:
+            best_score = avg_score / num_of_pictures
+            best_image = i  # name of a person
 
     return best_image
 
