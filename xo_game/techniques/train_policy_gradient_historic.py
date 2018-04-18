@@ -6,7 +6,7 @@ import random
 import numpy as np
 import tensorflow as tf
 
-from common.network_helpers import get_stochastic_network_move, load_network, save_network
+from xo_game.common.network_helpers import get_stochastic_network_move, load_network, save_network
 
 
 def train_policy_gradients_vs_historic(game_spec, create_network, network_file_path,

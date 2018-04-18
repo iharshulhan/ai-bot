@@ -128,7 +128,7 @@ def monte_carlo_tree_search_uct(game_spec, board_state, side, number_of_samples)
 
 
 if __name__ == '__main__':
-    from games.tic_tac_toe import TicTacToeGameSpec
+    from xo_game.games.tic_tac_toe import TicTacToeGameSpec
 
     sample_board_state = ((1, 0, -1),
                           (1, 0, 0),

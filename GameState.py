@@ -3,6 +3,7 @@
 import shelve
 from Config import sh_name
 
+
 def set_user_game(game, chat_id, state):
     """
     Записываем юзера в игроки и запоминаем состояние его игры
@@ -12,6 +13,7 @@ def set_user_game(game, chat_id, state):
     """
     with shelve.open(sh_name) as storage:
         storage[game + str(chat_id)] = state
+
 
 def finish_user_game(game, chat_id):
     """

@@ -21,10 +21,10 @@ dictionary_size = 7000
 maxlen_input = 50
 learning_rate = 0.000001
 
-vocabulary_file = 'vocabulary_movie'
-weights_file = 'my_model_weights20.h5'
-weights_file_GAN = 'my_model_weights.h5'
-weights_file_discrim = 'my_model_weights_discriminator.h5'
+vocabulary_file = 'weights/vocabulary_movie'
+weights_file = 'weights/my_model_weights20.h5'
+weights_file_GAN = 'weights/my_model_weights.h5'
+weights_file_discrim = 'weights/my_model_weights_discriminator.h5'
 unknown_token = 'something'
 
 name_of_computer = 'B3 personal assistant'

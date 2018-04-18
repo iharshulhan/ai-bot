@@ -17,14 +17,14 @@ force a draw.
 """
 import functools
 
-from common.network_helpers import create_network
-from games.tic_tac_toe import TicTacToeGameSpec
-from techniques.train_policy_gradient import train_policy_gradients
+from xo_game.common.network_helpers import create_network
+from xo_game.games.tic_tac_toe import TicTacToeGameSpec
+from xo_game.techniques import train_policy_gradients
 
 BATCH_SIZE = 100  # every how many games to do a parameter update?
 LEARN_RATE = 1e-4
 PRINT_RESULTS_EVERY_X = 1000  # every how many games to print the results
-NETWORK_FILE_PATH = None#'current_network.p'  # path to save the network to
+NETWORK_FILE_PATH = None  # 'current_network.p'  # path to save the network to
 NUMBER_OF_GAMES_TO_RUN = 1000000
 
 # to play a different game change this to another spec, e.g TicTacToeXGameSpec or ConnectXGameSpec, to get these to run

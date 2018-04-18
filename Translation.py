@@ -2,7 +2,7 @@ from googletrans import Translator
 translator = Translator()
 
 
-def googleTranslate(source):
+def google_translate(source):
     """
     Use google translate
     :param source: string to translate

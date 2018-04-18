@@ -12,8 +12,8 @@ given state with a given move applied. This can be useful for doing min-max or m
 import itertools
 import random
 
-from common.base_game_spec import BaseGameSpec
-from techniques.min_max import evaluate
+from xo_game.common.base_game_spec import BaseGameSpec
+from xo_game.techniques.min_max import evaluate
 
 
 def _new_board():

@@ -5,9 +5,9 @@ import functools
 
 import tensorflow as tf
 
-from common.network_helpers import load_network, get_deterministic_network_move
-from techniques.min_max import min_max_alpha_beta
-from techniques.monte_carlo import monte_carlo_tree_search_uct
+from xo_game.common.network_helpers import load_network, get_deterministic_network_move
+from xo_game.techniques.min_max import min_max_alpha_beta
+from xo_game.techniques.monte_carlo import monte_carlo_tree_search_uct
 
 
 def benchmark(game_spec, network_file_path, create_network_func, log_games=False, games_vs_random=500):

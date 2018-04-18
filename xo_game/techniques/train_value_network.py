@@ -4,7 +4,7 @@ import random
 import numpy as np
 import tensorflow as tf
 
-from common.network_helpers import create_network, load_network, get_deterministic_network_move, save_network
+from xo_game.common.network_helpers import create_network, load_network, get_deterministic_network_move, save_network
 
 
 # it would be good to have real board positions, but failing that just generate random ones

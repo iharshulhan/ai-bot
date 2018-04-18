@@ -5,20 +5,13 @@ is found there random weights are used. It then creates a series of copies of it
 After "SAVE_HISTORICAL_NETWORK_EVERY" games, it saves it's current weights into the weights of one of the historical
 networks. Over time the main network and the historical networks should improve.
 """
-import collections
 import functools
-import os
-import random
 
-import numpy as np
-import tensorflow as tf
-
-from common.network_helpers import create_convolutional_network, load_network, get_stochastic_network_move, \
-    save_network, create_network
-from games.tic_tac_toe_x import TicTacToeXGameSpec
-from techniques.min_max import min_max_alpha_beta
-from techniques.train_policy_gradient import train_policy_gradients
-from techniques.train_policy_gradient_historic import train_policy_gradients_vs_historic
+from xo_game.common.network_helpers import create_convolutional_network
+from xo_game.games.tic_tac_toe_x import TicTacToeXGameSpec
+from xo_game.techniques import min_max_alpha_beta
+from xo_game.techniques import train_policy_gradients
+from xo_game.techniques import train_policy_gradients_vs_historic
 
 SAVE_HISTORICAL_NETWORK_EVERY = 5000
 game_spec = TicTacToeXGameSpec(winning_length=5, board_size=10)
