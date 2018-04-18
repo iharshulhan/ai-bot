@@ -4,9 +4,11 @@ import uuid
 import pickle
 from time import sleep
 
+import io
 import telebot
 from filelock import FileLock
-
+from PIL import Image
+from face_recognition.face_recogntion import add_picture_to_collection, find_face_in_collection
 from seq2seq_chat.Seq2SeqTalk import chat
 from xo_game.games.tic_tac_toe import TicTacToeGameSpec
 from xo_game.games.tic_tac_toe_x import TicTacToeXGameSpec
@@ -93,7 +95,7 @@ input /solve and any mathematical (or other interesting for machine) request and
 
 5. Translate your text to english by using /translate command
 
-6. Send photo to recognize objects (80 different objects supported)
+6. Send a photo to recognize objects (80 different objects supported) or faces. First you need to send one of the commands described later and then a photo. /add_picture_for_identification {name} if you want the bot to remember a picture, /identify_by_photo to ask the bot to identify a person on the photo,  /recognize_objects to recognize objects on the picture
 
 By the way, you can use voice commands and natural phrases in different languages to do those things. 
 For example, type "I want to play that incredible Tic Tac Toe" and start playing.
@@ -268,9 +270,9 @@ def make_move_min_max_train(board_state, side):
 game_spec = TicTacToeXGameSpec(winning_length=5, board_size=10)
 
 with lock:
-    with open('mont_state_results.p', mode='rb') as f:
+    with open('weights/mont_state_results.p', mode='rb') as f:
         state_results = pickle.load(f)
-    with open('mont_state_samples.p', mode='rb') as f:
+    with open('weights/mont_state_samples.p', mode='rb') as f:
         state_samples = pickle.load(f)
 
 
@@ -464,23 +466,6 @@ def sentence_command(message):
         talk_with_bot(message)
 
 
-@bot.message_handler(content_types=["text"])
-def repeat_all_messages(message):
-    if re.compile("^[-+]?[0-9]$").match(message.text):
-        do_matches(message, message.text)
-
-    elif re.compile("^[x-z|X-Z][1-3]$").match(message.text):
-        bot.send_message(message.chat.id, "There XO (3x3) game.")
-        do_xo_small(message, message.text)
-
-    elif re.compile("^[a-o|A-O][0-9]+$").match(message.text):
-        bot.send_message(message.chat.id, "There XO (10x10) game.")
-        do_xo_big(message, message.text)
-
-    else:
-        sentence_command(message)
-
-
 @bot.message_handler(content_types=["voice"])
 def voice_processing(message):
     try:
@@ -497,8 +482,42 @@ def voice_processing(message):
         bot.send_message(message.chat.id, "I cannot recognize it. Try again.")
 
 
-# object-recognition
+what_to_do_with_an_image = 0
+name_of_a_person = ''
+
+
+@bot.message_handler(commands=['add_picture_for_identification'])
+def add_image_to_collection_set_var(message):
+    global what_to_do_with_an_image, name_of_a_person
+    name_of_a_person = message.text.replace('/add_picture_for_identification', '')
+    what_to_do_with_an_image = 1
+    bot.send_message(message.chat.id, "Okay. Send me an image!")
+
+
+@bot.message_handler(commands=['recognise_objects'])
+def add_image_to_collection_set_var(message):
+    global what_to_do_with_an_image
+    what_to_do_with_an_image = 0
+    bot.send_message(message.chat.id, "Okay. Send me an image!")
+
+
+@bot.message_handler(commands=['identify_by_photo'])
+def add_image_to_collection_set_var(message):
+    global what_to_do_with_an_image
+    what_to_do_with_an_image = 2
+    bot.send_message(message.chat.id, "Okay. Send me an image!")
+
+
 @bot.message_handler(content_types=["photo"])
+def do_smth_with_a_photo(message):
+    if what_to_do_with_an_image == 0:
+        object_recognition(message)
+    if what_to_do_with_an_image == 1:
+        add_image_to_collection(message)
+    if what_to_do_with_an_image == 2:
+        identify_user_by_photo(message)
+
+
 def object_recognition(message):
     try:
         bot.send_message(message.chat.id, "Got your image. Please, wait.")
@@ -517,8 +536,66 @@ def object_recognition(message):
         bot.send_message(message.chat.id, "I can't stand when it happens but something went wrong :(")
 
 
+def add_image_to_collection(message):
+    try:
+        bot.send_message(message.chat.id, "Got your image. Please, wait.")
+        file = bot.get_file(message.photo[-1].file_id)
+        image_str = bot.download_file(file.file_path)
+        tempBuff = io.BytesIO()
+        tempBuff.write(image_str)
+        tempBuff.seek(0)
+        img = Image.open(tempBuff)
+        name = name_of_a_person if name_of_a_person else f'{message.from_user.first_name}_{message.from_user.last_name}'
+        img.save(f'/tmp/{file.file_id}.jpg')
+        add_picture_to_collection(f'/tmp/{file.file_id}.jpg', name)
+    except Exception as e:
+        print(e)
+        bot.send_message(message.chat.id, "I can't stand when it happens but something went wrong :(")
+        return
+    bot.send_message(message.chat.id, "Great! I saved it.")
+
+
+def identify_user_by_photo(message):
+    try:
+        bot.send_message(message.chat.id, "Got your image. Please, wait.")
+        file = bot.get_file(message.photo[-1].file_id)
+        image_str = bot.download_file(file.file_path)
+        tempBuff = io.BytesIO()
+        tempBuff.write(image_str)
+        tempBuff.seek(0)
+        img = Image.open(tempBuff)
+        img.save(f'/tmp/{file.file_id}.jpg')
+        user = find_face_in_collection(f'/tmp/{file.file_id}.jpg')
+    except Exception as e:
+        print(e)
+        bot.send_message(message.chat.id, "I can't stand when it happens but something went wrong :(")
+        return
+
+    if user:
+        bot.send_message(message.chat.id, f'This is {user.replace("_", " ")} ;)')
+    else:
+        bot.send_message(message.chat.id, f"Sorry, don't know who you are...")
+
+
 def has_cyrillic(text):
     return bool(re.search('[а-яА-Я]', text))
+
+
+@bot.message_handler(content_types=["text"])
+def repeat_all_messages(message):
+    if re.compile("^[-+]?[0-9]$").match(message.text):
+        do_matches(message, message.text)
+
+    elif re.compile("^[x-z|X-Z][1-3]$").match(message.text):
+        bot.send_message(message.chat.id, "There XO (3x3) game.")
+        do_xo_small(message, message.text)
+
+    elif re.compile("^[a-o|A-O][0-9]+$").match(message.text):
+        bot.send_message(message.chat.id, "There XO (10x10) game.")
+        do_xo_big(message, message.text)
+
+    else:
+        sentence_command(message)
 
 
 def main():

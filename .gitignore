@@ -137,3 +137,5 @@ vocabulary_movie
 Config.py
 .scannerwork/
 yolo/yolov2.weights
+weights/
+face_recognition/images/
