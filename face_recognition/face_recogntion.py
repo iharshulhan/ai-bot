@@ -82,10 +82,6 @@ def find_face_in_collection(face_file_name: str, dir_name: str = 'face_recogniti
                 continue
 
             dist = distance_between_embedding(face, face_to_compare)
-            if 'Arn' in i:
-                print('Arny', dist)
-            if 'Ilgiz' in i:
-                print('Ilgiz', dist)
             avg_score += dist
             if dist <= THRESHOLD:
                 fl = 1
