@@ -7,8 +7,8 @@ import random
 
 import zlib
 
-from common.network_helpers import invert_board_state
-from techniques.min_max import min_max_alpha_beta
+from xo_game.common.network_helpers import invert_board_state
+from xo_game.techniques.min_max import min_max_alpha_beta
 
 
 def create_positions_set(game_spec, number_of_positions, choose_move_func, compress=False):
@@ -56,7 +56,7 @@ def create_positions_set(game_spec, number_of_positions, choose_move_func, compr
 
 if __name__ == '__main__':
     # example usage
-    from games.connect_4 import Connect4GameSpec
+    from xo_game.games import Connect4GameSpec
 
     game_spec = Connect4GameSpec()
 

@@ -16,7 +16,7 @@ copy of a given state with a given move applied. This can be useful for doing mi
 import itertools
 import random
 
-from common.base_game_spec import BaseGameSpec
+from xo_game.common.base_game_spec import BaseGameSpec
 
 
 def _new_board(board_size):

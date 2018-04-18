@@ -3,20 +3,16 @@ import random
 import pickle
 import numpy as np
 import time
-from copy import copy
 
-from filelock import Timeout, FileLock
+from filelock import FileLock
 
-from techniques.monte_carlo_uct_with_value import monte_carlo_tree_play
-from techniques.monte_carlo_uct_with_value import monte_carlo_tree_search_uct_with_value
-from games.tic_tac_toe_x import TicTacToeXGameSpec
-from techniques.min_max import min_max_alpha_beta
-
+from xo_game.techniques import monte_carlo_tree_play
+from xo_game.games.tic_tac_toe_x import TicTacToeXGameSpec
+from xo_game.techniques import min_max_alpha_beta
 
 state_results = collections.defaultdict(float)
 state_samples = collections.defaultdict(float)
 state_values = collections.defaultdict(float)
-
 
 lock = FileLock("mont_state_results.lock")
 
@@ -27,7 +23,6 @@ with lock:
         state_samples = pickle.load(f)
     with open('mont_state_values.p', mode='rb') as f:
         state_values = pickle.load(f)
-
 
 game_spec = TicTacToeXGameSpec(winning_length=5, board_size=10)
 
@@ -43,7 +38,6 @@ def make_move_min_max(board_state, side):
 def make_move_min_max_train(board_state, side):
     move = min_max_alpha_beta(game_spec, board_state, side, 3)[1]
     return move
-
 
 
 def make_move_network(board_state, side):

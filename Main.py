@@ -7,9 +7,9 @@ from time import sleep
 import telebot
 from filelock import FileLock
 
-from Seq2SeqTalk import chat, get_model, weights_file, weights_file_GAN
-from games.tic_tac_toe import TicTacToeGameSpec
-from games.tic_tac_toe_x import TicTacToeXGameSpec
+from seq2seq_chat.Seq2SeqTalk import chat
+from xo_game.games.tic_tac_toe import TicTacToeGameSpec
+from xo_game.games.tic_tac_toe_x import TicTacToeXGameSpec
 import logging
 from WolframApi import Wolfram
 from VoiceRecognizerApi import *
@@ -18,9 +18,9 @@ import re
 import GameState as games
 import Translation
 from Matches import Matches
-from techniques.min_max import min_max_alpha_beta
+from xo_game.techniques.min_max import min_max_alpha_beta
 
-from techniques.monte_carlo_uct_with_value import monte_carlo_tree_play
+from xo_game.techniques.monte_carlo_uct_with_value import monte_carlo_tree_play
 
 from TextToCommand import text_to_command
 
@@ -96,7 +96,7 @@ By the way, you can use voice commands and natural phrases in different language
 
 Also you can try to talk with it, however it still needs to learn a lot.
 
-P.S. /Stas_comeback to return Stas Protasov at IU. Use it carefully ;)"""
+P.S. /Stas_comeback to return Stas Protasov to IU. Use it carefully ;)"""
     bot.send_message(message.chat.id, msg)
 
 
@@ -127,7 +127,7 @@ def close_matches(message):
         logger.log(msg="close None game Matches")
 
 
-@bot.message_handler(commands=['Stas_comeback'])
+@bot.message_handler(commands=['Stas_comeback', 'stas_comeback'])
 def send_Stas(message):
     bot.send_photo(message.chat.id, photo=open('res/stas.jpeg', 'rb'))
 
@@ -372,7 +372,7 @@ def symbols_to_tuple(s):
     else:
         number = s[1]
 
-    return (mapping[letter], int(number) - 1)
+    return mapping[letter], int(number) - 1
 
 
 def serialize_3x3_board(board_state):
@@ -416,7 +416,7 @@ def serialize_10x10_board(board_state):
 @bot.message_handler(commands=['translate'])
 def translate(message):
     args = message.text.replace("/translate", "")
-    text = Translation.googleTranslate(args)
+    text = Translation.google_translate(args)
     bot.send_message(message.chat.id, 'Translation: ' + text)
     return text
 

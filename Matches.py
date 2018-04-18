@@ -29,11 +29,11 @@ class Matches:
             new_state = state
         # check user input
         if user_amount <= 0:
-            return ("Cheat <=> miserable live", None, None)
+            return "Cheat <=> miserable live", None, None
         if new_state - user_amount < 0:
-            return ("You've done wrong move", None, None)
+            return "You've done wrong move", None, None
         if user_amount > max_turn:
-            return ("Wrong move! Maximum value is " + str(max_turn), None, None)
+            return "Wrong move! Maximum value is " + str(max_turn), None, None
         # accept user input
         new_state = new_state - user_amount
         if new_state == 0:

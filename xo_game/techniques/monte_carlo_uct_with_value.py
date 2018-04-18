@@ -1,11 +1,8 @@
 import collections
 import random
-import pickle
 import math
 
-import numpy as np
-
-from techniques.monte_carlo import _upper_confidence_bounds
+from xo_game.techniques.monte_carlo import _upper_confidence_bounds
 
 
 def monte_carlo_tree_search_uct_with_value(game_spec, board_state, side, value_random, state_results, state_samples,

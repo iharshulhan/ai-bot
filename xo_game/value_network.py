@@ -5,24 +5,18 @@ learn to estimate weather that network would win, lose or draw from a given posi
 Alpha Go used a database of real positions to get it's predictions from, we don't have that for tic-tac-toe so instead
 we generate some random game positions and train off of the results we get playing from those.
 """
-import os
 import random
 import pickle
 import numpy as np
 import tensorflow as tf
 from keras.callbacks import ModelCheckpoint
-from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Input, Flatten, GlobalAveragePooling2D, Lambda
-from keras.layers import GlobalMaxPooling2D
+from keras.layers import Conv2D, Dense, Dropout, Input, Flatten
 from keras.layers.normalization import BatchNormalization
-from keras.layers.merge import Concatenate
 from keras.models import Model
 from keras.optimizers import Adam
 
-from common.network_helpers import create_network, load_network, save_network, \
-    get_deterministic_network_move, create_convolutional_network
-from games.tic_tac_toe import TicTacToeGameSpec
-from games.tic_tac_toe_x import TicTacToeXGameSpec
-from techniques.min_max import min_max_alpha_beta
+from xo_game.games.tic_tac_toe_x import TicTacToeXGameSpec
+from xo_game.techniques import min_max_alpha_beta
 
 BATCH_SIZE = 100  # every how many games to do a parameter update?
 

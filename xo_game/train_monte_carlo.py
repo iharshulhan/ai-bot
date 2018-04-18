@@ -5,15 +5,14 @@ import numpy as np
 import time
 from copy import copy
 
-from filelock import Timeout, FileLock
+from filelock import FileLock
 
 
 
-from techniques.monte_carlo_uct_with_value import monte_carlo_tree_play
-from techniques.monte_carlo_uct_with_value import monte_carlo_tree_search_uct_with_value
-from games.tic_tac_toe_x import TicTacToeXGameSpec
-from techniques.min_max import min_max_alpha_beta
-from value_network import gen_model
+from xo_game.techniques import monte_carlo_tree_play
+from xo_game.techniques import monte_carlo_tree_search_uct_with_value
+from xo_game.games.tic_tac_toe_x import TicTacToeXGameSpec
+from xo_game.techniques import min_max_alpha_beta
 
 state_results = collections.defaultdict(float)
 state_samples = collections.defaultdict(float)

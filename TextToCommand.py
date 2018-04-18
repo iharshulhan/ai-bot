@@ -57,7 +57,7 @@ def _parse(sentence):
     # print('Subject: ' + sub + '\nAction: ' + act + '\nObject: ' + obj + '\nProperty: ' + prop)
     with open('TextToCommand.log', 'a') as log_file:
         log_file.write('Subject: ' + sub + '\nAction: ' + act + '\nObject: ' + obj + '\nProperty: ' + prop + '\n\n')
-    return (sub, act, obj, prop)
+    return sub, act, obj, prop
 
 
 def text_to_command(sentence):
@@ -85,7 +85,7 @@ def text_to_command(sentence):
         else:
             return None, None
     elif any(cmd in act for cmd in WOLFRAM_COMMANDS) or any(cmd in sub for cmd in WOLFRAM_COMMANDS):
-        if obj == None:
+        if obj is None:
             obj = ''
         return 'evaluate', obj
     else:
