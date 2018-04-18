@@ -25,6 +25,8 @@ input /solve and any mathematical (or other interesting for machine) request and
 
 5. Translate your text to english by using /translate command
 
+6. Send photo to recognize objects (80 different objects supported)
+
 By the way, you can use voice commands and natural phrases in different languages to do those things. 
 For example, type "I want to play that incredible Tic Tac Toe" and start playing.
 

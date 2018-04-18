@@ -135,3 +135,4 @@ my_model_weights_bot.h5
 my_model_weights_discriminator.h5
 vocabulary_movie
 Config.py
+yolo/yolov2.weights
